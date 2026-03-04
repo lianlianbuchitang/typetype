@@ -7,7 +7,8 @@ from PySide6.QtQuick import QQuickTextDocument
 
 from .application.usecases.score_usecase import ScoreUseCase
 from .application.usecases.text_usecase import TextUseCase
-from .core.api_client import ApiClient
+from .config.runtime_config_registry import get_runtime_config
+from .core.api_client_registry import get_api_client
 from .services.sai_wen_service import SaiWenService
 from .typing.score_data import ScoreData
 
@@ -15,14 +16,6 @@ from .typing.score_data import ScoreData
 # (QML_IMPORT_MINOR_VERSION is optional)
 QML_IMPORT_NAME = "src.backend.textproperties"
 QML_IMPORT_MAJOR_VERSION = 1
-
-_shared_api_client: ApiClient | None = None
-
-
-def set_shared_api_client(api_client: ApiClient) -> None:
-    """设置共享 ApiClient，供 QML Bridge 使用。"""
-    global _shared_api_client
-    _shared_api_client = api_client
 
 
 @QmlElement
@@ -56,7 +49,7 @@ class Bridge(QObject):
         self._cursor = None  # 光标位置
         self._score_data = None  # ScoreData 实例（懒加载）
         self._clipboard = QGuiApplication.clipboard()  # 剪贴板对象
-        self._sai_wen_service = SaiWenService(api_client=_shared_api_client)  # 赛文服务
+        self._sai_wen_service = SaiWenService(api_client=get_api_client())  # 赛文服务
         self._text_usecase = TextUseCase(
             sai_wen_service=self._sai_wen_service,
             clipboard=self._clipboard,
@@ -330,9 +323,8 @@ class Bridge(QObject):
     @Slot(result=str)
     def handleLoadTextRequest(self):
         """处理从网络载文的请求"""
-        return self._text_usecase.load_text_from_network(
-            "https://www.jsxiaoshi.com/index.php/Api/Text/getContent"
-        )
+        config = get_runtime_config()
+        return self._text_usecase.load_text_from_network(config.jstext_source_url)
 
     @Slot(result=str)
     def handleLoadTextFromClipboardRequest(self):

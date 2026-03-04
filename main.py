@@ -7,7 +7,10 @@ from PySide6.QtQml import QQmlApplicationEngine
 import rc_resources  # noqa: F401  # 导入以注册 Qt 资源
 from src.backend import text_properties  # noqa: F401  # 在此导入才能在 qml 中使用
 from src.backend.backend import Backend
+from src.backend.config.runtime_config import RuntimeConfig
+from src.backend.config.runtime_config_registry import set_runtime_config
 from src.backend.core.api_client import ApiClient
+from src.backend.core.api_client_registry import set_api_client
 from src.backend.integration.global_key_listener import GlobalKeyListener
 from src.backend.integration.system_identifier import SystemIdentifier
 
@@ -15,8 +18,11 @@ from src.backend.integration.system_identifier import SystemIdentifier
 def main():
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
-    api_client = ApiClient(timeout=20.0)
-    text_properties.set_shared_api_client(api_client)
+    runtime_config = RuntimeConfig()
+    set_runtime_config(runtime_config)
+
+    api_client = ApiClient(timeout=runtime_config.api_timeout)
+    set_api_client(api_client)
 
     system_identifier = SystemIdentifier()
     os_type, display_server = system_identifier.get_system_info()
@@ -59,6 +65,7 @@ def main():
 
     # 清理资源并退出
     exit_code = app.exec()
+    api_client.close()
     if key_listener:
         key_listener.stop()  # 立即生效，无需 wait
     del engine
