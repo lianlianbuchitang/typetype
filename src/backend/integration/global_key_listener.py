@@ -1,5 +1,7 @@
 from PySide6.QtCore import QObject, QSocketNotifier, Signal
 
+from ..utils.logger import log_error, log_info
+
 
 class GlobalKeyListener(QObject):  # 继承 QObject 而非 QThread
     keyPressed = Signal(int, str)  # 发送 (按键码, 设备名)
@@ -17,7 +19,9 @@ class GlobalKeyListener(QObject):  # 继承 QObject 而非 QThread
             self.list_devices = list_devices
         except ImportError:
             # 如果在 Linux 下但没装库，或者意外在 Windows 下被实例化了，给出提示
-            print("Error: evdev library not found. This module only works on Linux.")
+            log_error(
+                "Error: evdev library not found. This module only works on Linux."
+            )
             raise
 
         self.devices = []  # 存储所有设备
@@ -60,7 +64,7 @@ class GlobalKeyListener(QObject):  # 继承 QObject 而非 QThread
             # 判断是否为键盘
             if self._is_keyboard(device):
                 keyboards.append(device)
-                print(f"发现键盘: {device.name} ({path})")
+                log_info(f"发现键盘: {device.name} ({path})")
         return keyboards
 
     def make_handler(self, dev):
@@ -80,7 +84,7 @@ class GlobalKeyListener(QObject):  # 继承 QObject 而非 QThread
 
     def stop(self):
         """立即停止，无需等待"""
-        print("正在停止监听器...")
+        log_info("正在停止监听器...")
         for notifier in self.notifiers:
             if notifier:
                 notifier.setEnabled(False)  # 禁用通知
@@ -91,7 +95,7 @@ class GlobalKeyListener(QObject):  # 继承 QObject 而非 QThread
             if device:
                 device.close()
                 device = None
-        print("监听器已停止")
+        log_info("监听器已停止")
 
     def _handle_events(self, device):
         """统一处理所有设备的按键事件"""

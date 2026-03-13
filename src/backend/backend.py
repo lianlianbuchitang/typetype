@@ -1,5 +1,7 @@
 from PySide6.QtCore import Property, QObject, Signal
 
+from .utils.logger import log_debug, log_info
+
 
 class Backend(QObject):  # Python 端的 Backend
     # 定义一个属性，QML 可以绑定它
@@ -16,7 +18,7 @@ class Backend(QObject):  # Python 端的 Backend
             key_listener.keyPressed.connect(self.on_key_received)
 
         self.specialPlatformConfirmed.emit(self._isSpecialPlatform)
-        print("[Backend] 检测到平台特殊性:", self._isSpecialPlatform)
+        log_info(f"[Backend] 检测到平台特殊性: {self._isSpecialPlatform}")
 
     @Property(bool, notify=specialPlatformConfirmed)
     def isSpecialPlatform(self):
@@ -24,6 +26,6 @@ class Backend(QObject):  # Python 端的 Backend
 
     def on_key_received(self, keyCode, deviceName):
         """接收按键并处理（可以在这里加逻辑）"""
-        print(f"[Backend] 收到按键: {keyCode} from {deviceName}")
+        log_debug(f"[Backend] 收到按键: {keyCode} from {deviceName}")
         # 转发给 QML
         self.keyPressed.emit(keyCode, deviceName)

@@ -2,6 +2,7 @@ from typing import Any
 
 import httpx
 
+from ..utils.logger import log_warning
 from .network_errors import (
     NetworkDecodeError,
     NetworkError,
@@ -66,7 +67,7 @@ class ApiClient:
         except Exception as e:
             self._last_error = NetworkError(str(e))
 
-        print(f"请求发生错误: {self._last_error}")
+        log_warning(f"请求发生错误: {self._last_error}")
         return None
 
     @property

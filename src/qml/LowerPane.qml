@@ -88,10 +88,10 @@ Pane {
                     // 处理按键事件
                     //==============================================
                     if (preeditText === '' && currentText === '') {
-                        console.log("Set false because no text");
+                        if (qmlDebug) console.log("Set false because no text");
                         bridge.handleStartStatus(false);
                     } else if (!bridge.isStart() && !bridge.isReadOnly()) {
-                        console.log("Set true status by LowePane's textChanged event.");
+                        if (qmlDebug) console.log("Set true status by LowePane's textChanged event.");
                         bridge.handleStartStatus(true);
                         if (root.isSpecialPlatform) {
                             bridge.handlePressed(); // 第一下按键别忘了统计, 后续按键由全局监听器统计
