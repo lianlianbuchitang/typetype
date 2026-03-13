@@ -36,7 +36,7 @@ Pane {
         property var bridge: null  // 将外部 Bridge 传进来使用（可选）
 
         Image {
-            source: "qrc:/resources/images/TypeTypeLogo.png"   // 如果用 Qt 资源系统
+            source: resourceBaseUrl + "images/TypeTypeLogo.png"
             // source: "images/logo.png"     // 或者直接用相对路径
             // source: "file:///absolute/path/to/logo.png"  // 也可以用绝对路径
             //width: 128

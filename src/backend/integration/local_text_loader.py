@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import QFile, QIODevice
@@ -32,5 +33,9 @@ class QtLocalTextLoader(LocalTextLoader):
             return f":{path[4:]}"
         if Path(path).is_absolute():
             return path
+        bundle_root = Path(sys.argv[0]).resolve().parent
+        bundle_candidate = bundle_root / path
+        if bundle_candidate.exists():
+            return str(bundle_candidate)
         project_root = Path(__file__).resolve().parents[3]
         return str(project_root / path)

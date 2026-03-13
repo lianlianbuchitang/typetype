@@ -21,13 +21,13 @@ ApplicationWindow {
     // 加载 UI 字体
     FontLoader {
         id: uiFontLoader
-        source: "qrc:/resources/fonts/HarmonyOS_Sans_SC_Regular.ttf" // 请确保路径对应你实际的文件位置
+        source: resourceBaseUrl + "fonts/HarmonyOS_Sans_SC_Regular.ttf"
     }
 
     // 加载 阅读/跟打 字体
     FontLoader {
         id: readerFontLoader
-        source: "qrc:/resources/fonts/LXGWWenKai-Regular.ttf"
+        source: resourceBaseUrl + "fonts/LXGWWenKai-Regular.ttf"
     }
 
     // ==========================================
@@ -61,7 +61,7 @@ ApplicationWindow {
         }
 
         function onTypingEnded() {
-            console.log("Typing ended");
+            if (qmlDebug) console.log("Typing ended");
             endDialog.scoreMessage = appBridge.getScoreMessage();
             endDialog.open();
         }

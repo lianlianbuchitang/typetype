@@ -1,10 +1,10 @@
 import os  # 引入 os 模块来处理路径
 import sys
 
+from PySide6.QtCore import QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
-import rc_resources  # noqa: F401  # 导入以注册 Qt 资源
 from src.backend.application.usecases.score_usecase import ScoreUseCase
 from src.backend.application.usecases.text_usecase import TextUseCase
 from src.backend.backend import Backend
@@ -15,6 +15,7 @@ from src.backend.integration.local_text_loader import QtLocalTextLoader
 from src.backend.integration.system_identifier import SystemIdentifier
 from src.backend.services.sai_wen_service import SaiWenService
 from src.backend.text_properties import Bridge
+from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
 
 def main():
@@ -40,14 +41,14 @@ def main():
 
     system_identifier = SystemIdentifier()
     os_type, display_server = system_identifier.get_system_info()
-    print("系统:", os_type, "平台:", display_server)
+    log_info(f"系统: {os_type} 平台: {display_server}")
 
     # 监听器
     key_listener = None
     if os_type == "Linux" and display_server == "Wayland":
         key_listener = GlobalKeyListener()
         key_listener.start()
-        print("因系统平台特殊性，全局监听器已启动")
+        log_info("因系统平台特殊性，全局监听器已启动")
 
     # 创建 Backend，并传入监听器
     backend = Backend(key_listener)
@@ -61,13 +62,20 @@ def main():
 
     # 将 QML 文件所在目录添加到导入路径 (如果你在 QML 里 import 其他自定义模块)
     engine.addImportPath(current_path)
+    resource_base_url = QUrl.fromLocalFile(
+        os.path.join(current_path, "resources") + "/"
+    )
+    engine.rootContext().setContextProperty(
+        "resourceBaseUrl", resource_base_url.toString()
+    )
+    engine.rootContext().setContextProperty("qmlDebug", is_debug_enabled())
 
     # 拼接出 Main.qml 的绝对文件路径
     # 注意：通常只需要加载入口文件 (Main.qml)，不需要另外加载 UpperPane 和 LowerPane
     # 因为 Main.qml 内部应该会引用它们。
     main_qml_path = os.path.join(current_path, "src", "qml", "Main.qml")
 
-    print(f"Loading QML from: {main_qml_path}")  # 打印一下方便调试
+    log_debug(f"Loading QML from: {main_qml_path}")
 
     # 使用 load 加载文件路径，而不是 loadFromModule
     engine.load(main_qml_path)

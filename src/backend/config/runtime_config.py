@@ -15,27 +15,27 @@ class RuntimeConfig:
             "builtin_demo": {
                 "label": "本地示例",
                 "type": "local",
-                "local_path": "qrc:/resources/texts/builtin_demo.txt",
+                "local_path": "resources/texts/builtin_demo.txt",
             },
             "fst_500": {
                 "label": "前五百",
                 "type": "local",
-                "local_path": "qrc:/resources/texts/前五百.txt",
+                "local_path": "resources/texts/前五百.txt",
             },
             "mid_500": {
                 "label": "中五百",
                 "type": "local",
-                "local_path": "qrc:/resources/texts/中五百.txt",
+                "local_path": "resources/texts/中五百.txt",
             },
             "lst_500": {
                 "label": "后五百",
                 "type": "local",
-                "local_path": "qrc:/resources/texts/后五百.txt",
+                "local_path": "resources/texts/后五百.txt",
             },
             "essential_single_char": {
                 "label": "打词必备单字",
                 "type": "local",
-                "local_path": "qrc:/resources/texts/打词必备单字.txt",
+                "local_path": "resources/texts/打词必备单字.txt",
             },
         }
     )
