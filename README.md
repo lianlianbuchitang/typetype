@@ -43,12 +43,18 @@ uv run ruff format --check .
 uv run ruff format .
 ```
 
+## 日志开关
+
+默认只输出 warning 及以上日志。可通过环境变量开启调试输出：
+
+- `TYPETYPE_DEBUG=1` 启用 debug 级日志
+- `TYPETYPE_LOG_LEVEL=info|warning|error|none` 设置日志级别
+
 ## 打包（Nuitka）
 
 ```bash
 uv run python -m ensurepip --upgrade
 uv pip install --upgrade nuitka --index-url https://pypi.org/simple
-uv run pyside6-rcc resources.qrc -o rc_resources.py
 uv run python -m nuitka main.py \
   --follow-imports \
   --enable-plugin=pyside6 \
@@ -57,8 +63,11 @@ uv run python -m nuitka main.py \
   --quiet \
   --noinclude-qt-translations \
   --standalone \
-  --include-data-dir=src=./src \
-  --include-data-dir=resources=./resources
+  --include-data-dir=src/qml=src/qml \
+  --include-data-dir=resources/texts=resources/texts \
+  --include-data-files=resources/images/TypeTypeLogo.png=resources/images/TypeTypeLogo.png \
+  --include-data-files=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf \
+  --include-data-files=resources/fonts/LXGWWenKai-Regular.ttf=resources/fonts/LXGWWenKai-Regular.ttf
 ```
 
 Windows 建议追加：`--assume-yes-for-downloads`。
