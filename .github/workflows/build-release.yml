@@ -33,7 +33,7 @@ jobs:
       - name: 准备构建目录
         run: |
           mkdir -p build-src
-          cp -a main.py pyproject.toml uv.lock resources.qrc src resources build-src/
+          cp -a main.py pyproject.toml uv.lock src resources build-src/
 
       - name: 安装依赖
         run: uv sync --frozen
@@ -47,13 +47,6 @@ jobs:
         run: uv pip install --upgrade nuitka --index-url https://pypi.org/simple
         working-directory: build-src
 
-      - name: 编译资源文件
-        run: |
-          if [ -f resources.qrc ]; then
-            uv run pyside6-rcc resources.qrc -o rc_resources.py
-          fi
-        working-directory: build-src
-
       - name: 运行打包
         run: |
           uv run python -m nuitka main.py \
@@ -64,8 +57,11 @@ jobs:
             --quiet \
             --noinclude-qt-translations \
             --standalone \
-            --include-data-dir=src=./src \
-            --include-data-dir=resources=./resources
+            --include-data-dir=src/qml=src/qml \
+            --include-data-dir=resources/texts=resources/texts \
+            --include-data-files=resources/images/TypeTypeLogo.png=resources/images/TypeTypeLogo.png \
+            --include-data-files=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf \
+            --include-data-files=resources/fonts/LXGWWenKai-Regular.ttf=resources/fonts/LXGWWenKai-Regular.ttf
         working-directory: build-src
 
       - name: 创建压缩包
@@ -105,7 +101,7 @@ jobs:
       - name: 准备构建目录
         run: |
           New-Item -ItemType Directory -Force -Path build-src | Out-Null
-          Copy-Item -Recurse -Force main.py,pyproject.toml,uv.lock,resources.qrc,src,resources -Destination build-src
+          Copy-Item -Recurse -Force main.py,pyproject.toml,uv.lock,src,resources -Destination build-src
 
       - name: 安装依赖
         run: uv sync --frozen
@@ -119,13 +115,6 @@ jobs:
         run: uv pip install --upgrade nuitka --index-url https://pypi.org/simple
         working-directory: build-src
 
-      - name: 编译资源文件
-        run: |
-          if (Test-Path resources.qrc) {
-            uv run pyside6-rcc resources.qrc -o rc_resources.py
-          }
-        working-directory: build-src
-
       - name: 运行打包
         run: |
           uv run python -m nuitka main.py `
@@ -137,8 +126,11 @@ jobs:
             --noinclude-qt-translations `
             --standalone `
             --assume-yes-for-downloads `
-            --include-data-dir=src=./src `
-            --include-data-dir=resources=./resources
+            --include-data-dir=src/qml=src/qml `
+            --include-data-dir=resources/texts=resources/texts `
+            --include-data-files=resources/images/TypeTypeLogo.png=resources/images/TypeTypeLogo.png `
+            --include-data-files=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf=resources/fonts/HarmonyOS_Sans_SC_Regular.ttf `
+            --include-data-files=resources/fonts/LXGWWenKai-Regular.ttf=resources/fonts/LXGWWenKai-Regular.ttf
         working-directory: build-src
 
       - name: 创建压缩包
