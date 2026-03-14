@@ -1,10 +1,12 @@
-import os  # 引入 os 模块来处理路径
+import os
 import sys
 
+import darkdetect
 from PySide6.QtCore import QUrl
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
 
+import RinUI.core.theme as _rinui_theme
+from RinUI import RinUIWindow
 from src.backend.application.usecases.score_usecase import ScoreUseCase
 from src.backend.application.usecases.text_usecase import TextUseCase
 from src.backend.backend import Backend
@@ -18,9 +20,36 @@ from src.backend.text_properties import Bridge
 from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
 
+def _check_darkdetect_support() -> bool:
+    """RinUI 原始实现不支持 Linux，但 darkdetect 在 Linux (D-Bus/gsettings) 上可用。"""
+    try:
+        return darkdetect.theme() is not None
+    except Exception:
+        return False
+
+
+# 在 ThemeManager 实例化之前修补
+_rinui_theme.check_darkdetect_support = _check_darkdetect_support
+
+
 def main():
     app = QGuiApplication(sys.argv)
-    engine = QQmlApplicationEngine()
+
+    # 注册 UI 字体并设为应用默认字体。
+    # RinUI 内部组件（Button、ComboBox 等）在 Linux 上读取 Qt.application.font.family，
+    # 设置后所有 RinUI 控件自动使用 HarmonyOS 字体，无需逐个覆盖。
+    _ui_font_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "resources",
+        "fonts",
+        "HarmonyOS_Sans_SC_Regular.ttf",
+    )
+    _font_id = QFontDatabase.addApplicationFont(_ui_font_path)
+    if _font_id != -1:
+        _families = QFontDatabase.applicationFontFamilies(_font_id)
+        if _families:
+            app.setFont(QFont(_families[0]))
+
     clipboard = QGuiApplication.clipboard()
     runtime_config = RuntimeConfig()
 
@@ -53,6 +82,10 @@ def main():
     # 创建 Backend，并传入监听器
     backend = Backend(key_listener)
 
+    # 使用 RinUIWindow 接管 engine 和 QML 加载
+    rin_window = RinUIWindow()
+    engine = rin_window.engine
+
     # 暴露 Backend 到 QML（用单例模式）
     engine.rootContext().setContextProperty("backend", backend)
     engine.rootContext().setContextProperty("appBridge", bridge)
@@ -71,20 +104,13 @@ def main():
     engine.rootContext().setContextProperty("qmlDebug", is_debug_enabled())
 
     # 拼接出 Main.qml 的绝对文件路径
-    # 注意：通常只需要加载入口文件 (Main.qml)，不需要另外加载 UpperPane 和 LowerPane
-    # 因为 Main.qml 内部应该会引用它们。
     main_qml_path = os.path.join(current_path, "src", "qml", "Main.qml")
-
     log_debug(f"Loading QML from: {main_qml_path}")
 
-    # 使用 load 加载文件路径，而不是 loadFromModule
-    engine.load(main_qml_path)
+    # 通过 RinUIWindow.load() 加载 QML（内部会注入 ThemeManager、设置 import path 等）
+    rin_window.load(main_qml_path)
 
     # --------------------
-
-    # 错误处理
-    if not engine.rootObjects():
-        sys.exit(-1)
 
     # 清理资源并退出
     exit_code = app.exec()
