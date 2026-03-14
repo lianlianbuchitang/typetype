@@ -1,6 +1,7 @@
 // qml/UpperPane.qml
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import RinUI as Rin
 
 Pane {
     id: root
@@ -10,6 +11,13 @@ Pane {
     property alias bridge: textArea.bridge
     property alias fontSize: textArea.font.pixelSize  // 暴露字体大小属性
     property alias fontFamily: textArea.font.family
+
+    background: Rectangle {
+        color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.cardColor : "#f5f5f5"
+        border.color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.dividerBorderColor : "#e0e0e0"
+        border.width: 1
+        radius: 2
+    }
 
     ScrollView {
         id: scrollView
@@ -40,6 +48,8 @@ Pane {
             textFormat: TextEdit.RichText   // 支持富文本格式
             font.pixelSize: 14
             text: "你好，世界。"
+            color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.textColor : "black"
+            background: Rectangle { color: "transparent" }
 
             property var bridge: null  // 将外部 Bridge 传进来使用（可选）
 

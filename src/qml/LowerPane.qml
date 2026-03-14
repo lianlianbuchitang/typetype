@@ -1,6 +1,7 @@
 // qml/LowerPane.qml
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import RinUI as Rin
 
 Pane {
     id: root
@@ -14,6 +15,13 @@ Pane {
     // 记录上一次的文本长度，用于计算增量
     property string lastText: ""
     property bool isSpecialPlatform: false
+
+    background: Rectangle {
+        color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.cardColor : "#f5f5f5"
+        border.color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.dividerBorderColor : "#e0e0e0"
+        border.width: 1
+        radius: 2
+    }
 
     ScrollView {
         id: scrollView
@@ -33,8 +41,10 @@ Pane {
             font.pixelSize: 14
             verticalAlignment: TextInput.AlignTop // 文字靠上
             width: scrollView.width // 宽度绑定到 scrollView，保证换行正确
+            color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.textColor : "black"
+            background: Rectangle { color: "transparent" }
 
-            readOnly: scrollView.bridge.textReadOnly
+            readOnly: scrollView.bridge ? scrollView.bridge.textReadOnly : true
 
             onCursorPositionChanged: {
                 //console.log("cursorPosition =", cursorPosition);

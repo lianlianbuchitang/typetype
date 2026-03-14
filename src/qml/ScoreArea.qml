@@ -2,75 +2,59 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import RinUI
 
-Item {
+Pane {
     id: root
 
     property alias bridge: rowLayout.bridge
-    property alias fontSize: rowLayout.fontSize
-    property alias fontFamily: rowLayout.fontFamily
 
-
-    Rectangle {
-        z: -1                 // 确保它在内容的下面（避免遮挡）
-        radius: 10
-        anchors.fill: parent
-        anchors.left: parent.left
-        anchors.leftMargin: 20   // 距离父容器左边 20px
-        anchors.right: parent.right
-        anchors.rightMargin: 20  // 距离父容器右边 20px
-        color: "lightgray"
-
-        RowLayout {
-            id: rowLayout
-            anchors {
-                fill: parent
-                leftMargin: 20   // 相当于 padding-left
-                rightMargin: 20  // 相当于 padding-right
-            }
-            property int fontSize: 14
-            property string fontFamily: ""
-
-            property var bridge: null  // 将外部 Bridge 传进来使用（可选）
-
-            /*
-        AppText {
-            id: usrName
-            fontSize: rowLayout.fontSize
-            text: "用户: " + "三分月流光"
+    background: Rectangle {
+        color: Theme.currentTheme ? Theme.currentTheme.colors.cardColor : "lightgray"
+        // 仅上下边线，作为区块分隔
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            color: Theme.currentTheme ? Theme.currentTheme.colors.dividerBorderColor : "#e0e0e0"
         }
-         */
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.currentTheme ? Theme.currentTheme.colors.dividerBorderColor : "#e0e0e0"
+        }
+    }
 
-            AppText {
-                id: totalTime
-                fontSize: rowLayout.fontSize
-                fontFamily: rowLayout.fontFamily
-                text: "时间: " + rowLayout.bridge.totalTime.toFixed(1)
-            }
-            AppText {
-                id: typeSpeed
-                fontSize: rowLayout.fontSize
-                fontFamily: rowLayout.fontFamily
-                text: "速度: " + rowLayout.bridge.typeSpeed.toFixed(2)
-            }
-            AppText {
-                id: keyStroke
-                fontSize: rowLayout.fontSize
-                fontFamily: rowLayout.fontFamily
-                text: "击键: " + rowLayout.bridge.keyStroke.toFixed(2)
-            }
-            AppText {
-                id: codeLength
-                fontSize: rowLayout.fontSize
-                fontFamily: rowLayout.fontFamily
-                text: "码长: " + rowLayout.bridge.codeLength.toFixed(2)
-            }
-            AppText {
-                id: charNum
-                fontSize: rowLayout.fontSize
-                fontFamily: rowLayout.fontFamily
-                text: "字数: " + rowLayout.bridge.charNum
-            }
+    RowLayout {
+        id: rowLayout
+        anchors.fill: parent
+        anchors.leftMargin: 20
+        anchors.rightMargin: 20
+
+        property var bridge: null
+
+        AppText {
+            id: totalTime
+            text: "时间: " + (rowLayout.bridge ? rowLayout.bridge.totalTime.toFixed(1) : "0.0")
+        }
+        AppText {
+            id: typeSpeed
+            text: "速度: " + (rowLayout.bridge ? rowLayout.bridge.typeSpeed.toFixed(2) : "0.00")
+        }
+        AppText {
+            id: keyStroke
+            text: "击键: " + (rowLayout.bridge ? rowLayout.bridge.keyStroke.toFixed(2) : "0.00")
+        }
+        AppText {
+            id: codeLength
+            text: "码长: " + (rowLayout.bridge ? rowLayout.bridge.codeLength.toFixed(2) : "0.00")
+        }
+        AppText {
+            id: charNum
+            text: "字数: " + (rowLayout.bridge ? rowLayout.bridge.charNum : 0)
         }
     }
 }
