@@ -1,9 +1,8 @@
 import QtQuick.Controls
+import RinUI
 
 Dialog {
     id: root
-    property alias fontSize: root.font.pixelSize
-    property alias fontFamily: root.font.family
     property var bridge: null
     property string scoreMessage: ""
 
@@ -13,9 +12,7 @@ Dialog {
 
     AppText {
         text: "<b>本次跟打结束，是否复制成绩？</b><br>" + root.scoreMessage
-        fontSize: root.fontSize
-        fontFamily: root.fontFamily
-        color: "#2c3e50"
+        color: Theme.currentTheme ? Theme.currentTheme.colors.textColor : "#2c3e50"
         leftPadding: 20
         rightPadding: 20
     }
