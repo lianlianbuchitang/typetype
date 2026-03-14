@@ -31,6 +31,12 @@ uv run python -m nuitka main.py \
   --follow-imports \
   --enable-plugin=pyside6 \
   --include-qt-plugins=qml \
+  --include-package=RinUI \
+  --include-data-dir=RinUI/components=RinUI/components \
+  --include-data-dir=RinUI/themes=RinUI/themes \
+  --include-data-dir=RinUI/assets=RinUI/assets \
+  --include-data-dir=RinUI/languages=RinUI/languages \
+  --include-data-files=RinUI/qmldir=RinUI/qmldir \
   --output-dir=deployment \
   --quiet \
   --noinclude-qt-translations \
@@ -42,6 +48,8 @@ uv run python -m nuitka main.py \
   --include-data-files=resources/fonts/LXGWWenKai-Regular.ttf=resources/fonts/LXGWWenKai-Regular.ttf
 ```
 
+Windows 建议追加：`--assume-yes-for-downloads`。
+
 ## 2. 当前架构（以代码为准）
 
 ```text
@@ -49,11 +57,18 @@ src/backend/
 ├── application/
 │   ├── ports/       # 协议：Clipboard/TextFetcher/LocalTextLoader
 │   └── usecases/    # 业务编排：TextUseCase/ScoreUseCase
+├── config/          # RuntimeConfig
 ├── core/            # ApiClient 与网络异常模型
 ├── integration/     # Qt/系统层实现（本地文本加载、键盘监听等）
+├── models/          # 数据传输对象（ScoreDTO 等）
+├── security/        # 加密相关
 ├── services/        # 具体网络服务（如 SaiWenService）
+├── typing/          # 打字数据模型
+├── utils/           # 日志等工具
 ├── workers/         # 后台任务（避免阻塞 UI）
 └── text_properties.py  # Bridge（appBridge）
+
+RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 ```
 
 关键点：
@@ -61,6 +76,9 @@ src/backend/
 - 依赖注入在 `main.py` 完成，不再使用全局 registry。
 - QML 通过 `appBridge` 与后端交互。
 - 文本加载支持 `network` 与 `local` 两类来源。
+- UI 框架使用 RinUI（vendored），提供主题、组件和暗色模式支持。
+- UI 字体由 `main.py` 中 `app.setFont()` 全局设置，QML 层不再传递字体属性。
+- `pyproject.toml` 中 `[tool.ruff] exclude = ["RinUI"]` 排除第三方代码的 lint 检查。
 
 ## 3. 代码风格
 

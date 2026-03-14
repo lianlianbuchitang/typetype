@@ -59,6 +59,12 @@ uv run python -m nuitka main.py \
   --follow-imports \
   --enable-plugin=pyside6 \
   --include-qt-plugins=qml \
+  --include-package=RinUI \
+  --include-data-dir=RinUI/components=RinUI/components \
+  --include-data-dir=RinUI/themes=RinUI/themes \
+  --include-data-dir=RinUI/assets=RinUI/assets \
+  --include-data-dir=RinUI/languages=RinUI/languages \
+  --include-data-files=RinUI/qmldir=RinUI/qmldir \
   --output-dir=deployment \
   --quiet \
   --noinclude-qt-translations \
@@ -77,16 +83,24 @@ Windows 建议追加：`--assume-yes-for-downloads`。
 ```text
 typetype/
 ├── main.py
+├── RinUI/               # 第三方 QML 框架（vendored）
 ├── resources/
+│   ├── fonts/
+│   ├── images/
 │   └── texts/
 ├── src/
 │   ├── backend/
 │   │   ├── application/
 │   │   │   ├── ports/
 │   │   │   └── usecases/
+│   │   ├── config/
 │   │   ├── core/
 │   │   ├── integration/
+│   │   ├── models/
+│   │   ├── security/
 │   │   ├── services/
+│   │   ├── typing/
+│   │   ├── utils/
 │   │   ├── workers/
 │   │   └── text_properties.py
 │   └── qml/
