@@ -11,6 +11,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pycryptodome>=3.23.0",
     "pyside6>=6.10.2",
+    "pywin32>=310; platform_system == 'Windows'",
     "qasync>=0.28.0",
 ]
 
