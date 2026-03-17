@@ -219,7 +219,7 @@ Item {
             ? navigationBar.window.titleBarHost
             : navigationBar
         anchors.left: parent.left
-        anchors.leftMargin: navigationBar.macTitleSafeInset
+        anchors.leftMargin: navigationBar.isMacOS ? navigationBar.macTitleSafeInset : Utils.windowDragArea
         anchors.verticalCenter: parent.verticalCenter
         height: titleBarHeight
         spacing: 16

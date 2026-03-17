@@ -18,7 +18,7 @@ Popup {
 
     implicitWidth: 100
     implicitHeight: Math.min(listView.contentHeight + 6, maximumHeight)
-    y: (parent.height - contextMenu.height) / 2
+    y: parent.height
     height: implicitHeight  // 保持隐式绑定
     closePolicy: Popup.CloseOnPressOutside
     focus: true
@@ -128,7 +128,7 @@ Popup {
     // 按钮 / Button //
 
 
-    Behavior on y { NumberAnimation { duration: Utils.animationSpeed; easing.type:Easing.InOutQuart } }
+    // Behavior on y removed: dropdown should expand in-place without vertical sliding
 
     enter: Transition {
         ParallelAnimation {
