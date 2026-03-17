@@ -4,10 +4,10 @@ import QtQuick.Layouts 1.15
 import RinUI
 
 FluentPage {
-    title: qsTr("排行榜")
+    title: qsTr("日榜")
 
     Text {
         typography: Typography.Body
-        text: qsTr("排行榜页面正在建设中…")
+        text: qsTr("日榜页面正在建设中...")
     }
 }

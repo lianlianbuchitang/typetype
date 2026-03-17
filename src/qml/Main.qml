@@ -22,8 +22,24 @@ FluentWindow {
         },
         {
             title: qsTr("排行榜"),
-            page: Qt.resolvedUrl("pages/LeaderboardPage.qml"),
-            icon: "ic_fluent_trophy_20_regular"
+            icon: "ic_fluent_trophy_20_regular",
+            subItems: [
+                {
+                    title: qsTr("日榜"),
+                    page: Qt.resolvedUrl("pages/DailyLeaderboard.qml"),
+                    icon: "ic_fluent_calendar_day_20_regular"
+                },
+                {
+                    title: qsTr("周榜"),
+                    page: Qt.resolvedUrl("pages/WeeklyLeaderboard.qml"),
+                    icon: "ic_fluent_calendar_week_start_20_regular"
+                },
+                {
+                    title: qsTr("总榜"),
+                    page: Qt.resolvedUrl("pages/AllTimeLeaderboard.qml"),
+                    icon: "ic_fluent_data_bar_vertical_star_20_regular"
+                }
+            ]
         },
         {
             title: qsTr("个人中心"),
