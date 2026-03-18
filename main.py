@@ -15,7 +15,10 @@ from src.backend.core.api_client import ApiClient
 from src.backend.integration.global_key_listener import GlobalKeyListener
 from src.backend.integration.local_text_loader import QtLocalTextLoader
 from src.backend.integration.system_identifier import SystemIdentifier
-from src.backend.services.sai_wen_service import SaiWenService
+from src.backend.integration.sai_wen_service import SaiWenService
+from src.backend.domain.auth_service import AuthService
+from src.backend.domain.text_load_service import TextLoadService
+from src.backend.domain.typing_service import TypingService
 from src.backend.text_properties import Bridge
 from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
@@ -62,11 +65,25 @@ def main():
         local_text_loader=local_text_loader,
     )
     score_usecase = ScoreUseCase(clipboard=clipboard)
-    bridge = Bridge(
+    typing_service = TypingService(score_usecase=score_usecase)
+    text_load_service = TextLoadService(
         text_usecase=text_usecase,
-        score_usecase=score_usecase,
         runtime_config=runtime_config,
     )
+    auth_service = AuthService(
+        api_client=api_client,
+        login_url=runtime_config.login_api_url,
+        validate_url=runtime_config.validate_api_url,
+        refresh_url=runtime_config.refresh_api_url,
+    )
+    bridge = Bridge(
+        typing_service=typing_service,
+        text_load_service=text_load_service,
+        auth_service=auth_service,
+        runtime_config=runtime_config,
+    )
+
+    bridge.initializeLoginState()
 
     system_identifier = SystemIdentifier()
     os_type, display_server = system_identifier.get_system_info()

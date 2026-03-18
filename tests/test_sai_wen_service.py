@@ -3,7 +3,7 @@ sai_wen_service 模块测试
 """
 
 from src.backend.core.api_client import ApiClient
-from src.backend.services.sai_wen_service import SaiWenService
+from src.backend.integration.sai_wen_service import SaiWenService
 
 
 class DummyApiClient(ApiClient):
@@ -26,10 +26,10 @@ class TestSaiWenService:
 
     def test_msg_is_string(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -42,10 +42,10 @@ class TestSaiWenService:
 
     def test_msg_is_dict_with_content(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -54,10 +54,10 @@ class TestSaiWenService:
 
     def test_msg_is_dict_with_zero_key(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -68,10 +68,10 @@ class TestSaiWenService:
 
     def test_msg_is_other_type(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -80,10 +80,10 @@ class TestSaiWenService:
 
     def test_msg_is_none(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -92,10 +92,10 @@ class TestSaiWenService:
 
     def test_request_exception_returns_none(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
@@ -104,10 +104,10 @@ class TestSaiWenService:
 
     def test_request_error_raises_last_error(self, monkeypatch):
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.time.time", lambda: 1234567890
+            "src.backend.integration.sai_wen_service.time.time", lambda: 1234567890
         )
         monkeypatch.setattr(
-            "src.backend.services.sai_wen_service.crypt.encrypt",
+            "src.backend.integration.sai_wen_service.crypt.encrypt",
             lambda _: "XENCODED",
         )
 
