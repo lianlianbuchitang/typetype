@@ -42,6 +42,11 @@ class RuntimeConfig:
     default_text_source_key: str = "builtin_demo"
     api_timeout: float = 20.0
 
+    # 登录 API
+    login_api_url: str = "http://127.0.0.1:8080/api/v1/auth/login"
+    validate_api_url: str = "http://127.0.0.1:8080/api/v1/users/me"
+    refresh_api_url: str = "http://127.0.0.1:8080/api/v1/auth/refresh"
+
     def get_text_source(self, source_key: str | None = None) -> dict[str, str] | None:
         """按来源 key 获取来源配置。"""
         key = source_key or self.default_text_source_key

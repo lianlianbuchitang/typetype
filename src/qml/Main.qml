@@ -13,6 +13,9 @@ FluentWindow {
     minimumHeight: 480
     title: "TypeType"
 
+    // Expose loggedin state to NavigationView for page injection
+    property bool loggedin: appBridge ? appBridge.loggedin : false
+
     navigationItems: [
         {
             title: qsTr("跟打"),

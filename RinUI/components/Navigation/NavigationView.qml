@@ -19,6 +19,9 @@ RowLayout {
     property string defaultPage: ""  // 默认索引项
     property int pushEnterFromY: height
     property var window: parent  // 窗口对象
+    
+    // Global state injection //
+    property bool loggedin: false  // 登录状态，从 Main.qml 传递给所有页面
 
     // 页面组件缓存(Component)
     property var componentCache: ({})
@@ -352,7 +355,8 @@ RowLayout {
                 normalizeKeyFromPage(pageKey)
             if (stackView.currentItem && stackView.currentItem.objectName === currentObjectName) {
                 let pageInstance = component.createObject(stackView, Object.assign({}, properties, {
-                    objectName: currentObjectName
+                    objectName: currentObjectName,
+                    loggedin: navigationView.loggedin
                 }))
                 if (!pageInstance) {
                     console.error("Failed to create page instance for reload:", pageKey)
@@ -402,6 +406,8 @@ RowLayout {
         let pageInstance = component.createObject(stackView, Object.assign({}, properties, {
             objectName: targetObjectName
         }))
+        
+        
         if (!pageInstance) {
             console.error("Failed to create page instance for:", pageKey)
             setPushInProgress(false)
@@ -446,7 +452,8 @@ RowLayout {
                     let pageInstance = pageInfo.component.createObject(stackView, {
                         objectName: normalizeKeyFromPage(pageInfo.pageKey).includes("/") ?
                             normalizeKeyFromPage(pageInfo.pageKey).split("/").pop().replace(".qml", "") :
-                            normalizeKeyFromPage(pageInfo.pageKey)
+                            normalizeKeyFromPage(pageInfo.pageKey),
+                        loggedin: navigationView.loggedin
                     })
                     if (pageInstance) {
                         stackView.push(pageInstance, {}, StackView.Immediate)

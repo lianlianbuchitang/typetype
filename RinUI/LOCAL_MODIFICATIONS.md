@@ -41,3 +41,29 @@
 - 第 222 行: `anchors.leftMargin: navigationBar.macTitleSafeInset`
   → `anchors.leftMargin: navigationBar.isMacOS ? navigationBar.macTitleSafeInset : Utils.windowDragArea`
   （非 macOS 平台上为 Back 按钮补偿 windowDragArea 偏移，与下方导航项对齐）
+
+---
+
+## 3. NavigationView 登录状态属性传递
+
+**文件**: `RinUI/components/Navigation/NavigationView.qml`
+
+**问题**: 需要在 Main.qml 中管理的登录状态传递给所有页面，实现统一的登录状态管理。
+
+**原因**:
+- Main.qml 中有 `property bool loggedin: false` 需要传递给所有页面
+- NavigationView 负责创建和管理所有页面，需要作为中间层传递属性
+- 页面需要根据登录状态显示不同的内容
+
+**修改**:
+- 第 24 行: 添加 `property bool loggedin: false`
+  （登录状态属性，从 Main.qml 传入）
+- 第 403 行: 在页面创建时传递 loggedin 属性
+  ```qml
+  let pageInstance = component.createObject(stackView, Object.assign({}, properties, {
+      objectName: targetObjectName,
+      loggedin: navigationView.loggedin  // 传递登录状态到页面
+  }))
+  ```
+
+**注意**: 此修改支持登录状态从 Main.qml → NavigationView → 各个页面的完整传递链路。

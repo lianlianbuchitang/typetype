@@ -58,17 +58,17 @@ Pane {
         ComboBox {
             id: sourceSelector
             width: 140
+            height: 40
             model: sourceListModel
             textRole: "label"
             valueRole: "key"
             anchors.verticalCenter: parent.verticalCenter
-            height: 45
         }
 
-        RoundButton {
+        Button {
             id: loadText
             width: 140
-            height: 45
+            height: 40
             text: "载文"
             onClicked: {
                 root.requestLoadText(sourceSelector.currentValue);
@@ -76,10 +76,10 @@ Pane {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        RoundButton {
+        Button {
             id: clipboardLoadText
             width: 140
-            height: 45
+            height: 40
             text: "剪贴板载文"
             onClicked: {
                 root.requestLoadTextFromClipboard();
@@ -87,10 +87,10 @@ Pane {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        RoundButton {
+        Button {
             id: retype
             width: 140
-            height: 45
+            height: 40
             text: "重打[F3]"
             onClicked: {
                 root.requestRetype();
