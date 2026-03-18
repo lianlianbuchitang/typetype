@@ -48,17 +48,24 @@ Windows 建议追加：`--assume-yes-for-downloads`。
 
 ## 2. 当前架构（以代码为准）
 
-```text
+```
 src/backend/
 ├── application/
 │   ├── ports/       # 协议：Clipboard/TextFetcher/LocalTextLoader
 │   └── usecases/    # 业务编排：TextUseCase/ScoreUseCase
 ├── config/          # RuntimeConfig
 ├── core/            # ApiClient 与网络异常模型
-├── integration/     # Qt/系统层实现（本地文本加载、键盘监听等）
+├── domain/          # 领域服务
+│   ├── auth_service.py      # 登录认证
+│   ├── text_load_service.py # 文本加载
+│   └── typing_service.py    # 打字统计
+├── integration/     # 内外集成
+│   ├── global_key_listener.py   # 全局键盘监听
+│   ├── local_text_loader.py     # 本地文本加载
+│   ├── sai_wen_service.py       # 第三方网络文本服务
+│   └── system_identifier.py     # 系统识别
 ├── models/          # 数据传输对象（ScoreDTO 等）
 ├── security/        # 加密相关
-├── services/        # 具体网络服务（如 SaiWenService）
 ├── typing/          # 打字数据模型
 ├── utils/           # 日志等工具
 ├── workers/         # 后台任务（避免阻塞 UI）
@@ -67,7 +74,46 @@ src/backend/
 RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 ```
 
-关键点：
+### 分层架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    QML 层                              │
+│           (通过 appBridge 与后端通信)                    │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────┐
+│              Bridge (QML 通信适配层)                       │
+│   仅负责：属性代理、信号转发、Slot 入口                    │
+└─────────┬───────────────────────────┬───────────────────┘
+          │                           │
+          ▼                           ▼
+┌─────────────────────┐   ┌───────────────────────────────┐
+│   Domain Services   │   │      Application Layer       │
+│                     │   │                               │
+│  - TypingService   │   │  - TextUseCase               │
+│  - TextLoadService │   │  - ScoreUseCase               │
+│  - AuthService     │   │                               │
+└─────────────────────┘   └───────────────┬───────────────┘
+                                            │
+                                            ▼
+                              ┌───────────────────────────────┐
+                              │      Ports (接口定义)          │
+                              │  - TextFetcher                │
+                              │  - LocalTextLoader            │
+                              │  - ClipboardReader/Writer     │
+                              └───────────────┬───────────────┘
+                                              │
+                                              ▼
+                              ┌───────────────────────────────┐
+                              │   Integration (实现)          │
+                              │  - SaiWenService             │
+                              │  - QtLocalTextLoader          │
+                              │  - QtClipboard                │
+                              └───────────────────────────────┘
+```
+
+### 关键点
 
 - 依赖注入在 `main.py` 完成，不再使用全局 registry。
 - QML 通过 `appBridge` 与后端交互。
@@ -75,6 +121,34 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 - UI 框架使用 RinUI（vendored），提供主题、组件和暗色模式支持。
 - UI 字体由 `main.py` 中 `app.setFont()` 全局设置，QML 层不再传递字体属性。
 - `pyproject.toml` 中 `[tool.ruff] exclude = ["RinUI"]` 排除第三方代码的 lint 检查。
+
+### 各 Service 职责
+
+| Service | 职责 |
+|---------|------|
+| **TypingService** | 打字统计（ScoreData 状态、计时器、键数累积、文本上色、历史记录构建） |
+| **TextLoadService** | 文本加载（来源路由、网络/本地/剪贴板加载、Worker 线程管理） |
+| **AuthService** | 登录认证（login/logout、token 验证与刷新、状态持久化） |
+| **SaiWenService** | 第三方网络文本获取（实现 TextFetcher 协议） |
+
+### Bridge 职责（薄适配层）
+
+- **属性代理**：透传各 Service 的只读属性到 QML（`loggedin`, `typeSpeed`, `textLoading` 等）
+- **信号转发**：Service 发射的信号转发到 QML 层
+- **Slot 入口**：QML 调用请求转发到对应 Service
+
+```python
+# main.py 中的依赖注入示例
+typing_service = TypingService(score_usecase=score_usecase)
+text_load_service = TextLoadService(text_usecase=text_usecase, runtime_config=runtime_config)
+auth_service = AuthService(api_client=api_client, ...)
+bridge = Bridge(
+    typing_service=typing_service,
+    text_load_service=text_load_service,
+    auth_service=auth_service,
+    runtime_config=runtime_config,
+)
+```
 
 ## 3. 代码风格
 

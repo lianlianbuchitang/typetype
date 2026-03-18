@@ -91,10 +91,10 @@ typetype/
 │   │   │   └── usecases/
 │   │   ├── config/
 │   │   ├── core/
-│   │   ├── integration/
+│   │   ├── domain/          # 领域服务
+│   │   ├── integration/     # 内外集成
 │   │   ├── models/
 │   │   ├── security/
-│   │   ├── services/
 │   │   ├── typing/
 │   │   ├── utils/
 │   │   ├── workers/
@@ -105,10 +105,81 @@ typetype/
 
 ## 架构说明
 
-- `main.py` 负责依赖装配（DI），包括 `ApiClient`、`SaiWenService`、`TextUseCase`、`ScoreUseCase`、`Bridge`。
-- `TextUseCase` 通过 `TextFetcher` / `LocalTextLoader` / `ClipboardReader` 协议解耦实现。
-- `Bridge(appBridge)` 暴露给 QML，负责状态同步、信号分发、异步载文。
-- `RuntimeConfig` 管理文本来源列表和默认来源。
+### 分层概述
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    QML 层                           │
+│   (UI 组件通过 appBridge 与后端通信)                 │
+└─────────────────────┬───────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────┐
+│              Bridge (QML 通信适配层)                  │
+│   - 属性代理（loggedin, userNickname, typeSpeed 等） │
+│   - 信号转发（Service → QML）                        │
+│   - Slot 入口（QML → Service）                       │
+└─────────┬───────────────────────────┬───────────────┘
+          │                           │
+          ▼                           ▼
+┌─────────────────────┐   ┌─────────────────────────────┐
+│   Domain Services   │   │      Application Layer     │
+│                    │   │                             │
+│  - TypingService   │   │  - TextUseCase             │
+│  - TextLoadService │   │  - ScoreUseCase             │
+│  - AuthService     │   │                             │
+└─────────────────────┘   └──────────────┬──────────────┘
+                                         │
+                                         ▼
+                              ┌─────────────────────────────┐
+                              │      Ports (接口定义)        │
+                              │                             │
+                              │  - TextFetcher              │
+                              │  - LocalTextLoader          │
+                              │  - ClipboardReader/Writer   │
+                              └──────────────┬──────────────┘
+                                             │
+                                             ▼
+                              ┌─────────────────────────────┐
+                              │   Integration (实现)        │
+                              │                             │
+                              │  - SaiWenService           │
+                              │  - QtLocalTextLoader       │
+                              │  - QtClipboard             │
+                              └─────────────────────────────┘
+```
+
+### 职责说明
+
+| 层次 | 职责 | 示例 |
+|------|------|------|
+| **Bridge** | QML 通信适配层，仅做属性代理和信号转发 | `appBridge.typeSpeed` |
+| **Domain Service** | 领域逻辑 + 状态管理 | `TypingService` 打字统计 |
+| **UseCase** | 业务流程编排 + 异常转换 | `TextUseCase.load_text()` |
+| **Port** | 接口定义（抽象依赖） | `TextFetcher` |
+| **Integration** | 接口实现（具体细节） | `SaiWenService` |
+
+### 依赖注入
+
+`main.py` 负责所有对象的创建和注入：
+
+```python
+typing_service = TypingService(score_usecase=score_usecase)
+text_load_service = TextLoadService(text_usecase=text_usecase, runtime_config=runtime_config)
+auth_service = AuthService(...)
+bridge = Bridge(
+    typing_service=typing_service,
+    text_load_service=text_load_service,
+    auth_service=auth_service,
+    runtime_config=runtime_config,
+)
+```
+
+### 各 Service 职责
+
+- **TypingService**：打字统计（ScoreData、计时器、键数累积、文本上色）
+- **TextLoadService**：文本加载（网络/本地/剪贴板路由、Worker 线程管理）
+- **AuthService**：登录认证（login/logout、token 刷新、状态持久化）
+- **RuntimeConfig**：管理文本来源列表和默认来源
 
 ## Spring Boot 服务接入规划
 
