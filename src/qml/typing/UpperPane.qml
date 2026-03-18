@@ -48,7 +48,9 @@ Pane {
             font.pixelSize: 14
             text: "你好，世界。"
             color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.textColor : "black"
-            background: Rectangle { color: "transparent" }
+            background: Rectangle {
+                color: "transparent"
+            }
 
             // 把底层的 textDocument（QQuickTextDocument）传给 Python 的 appBridge
             Component.onCompleted: {
@@ -63,7 +65,8 @@ Pane {
 
                 // 获取光标所在行的矩形信息
                 var rect = textArea.positionToRectangle(cursorPos);
-                if (!rect) return;
+                if (!rect)
+                    return;
 
                 // 目标：光标所在行顶部 - 1 行边距，位于视口顶部
                 var targetY = Math.max(rect.y - rect.height, 0);

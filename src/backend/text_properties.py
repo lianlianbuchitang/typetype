@@ -162,7 +162,7 @@ class Bridge(QObject):
 
     @Slot(result=int)
     def getCursorPos(self) -> int:
-        return 0
+        return self._typing_service.cursor_position
 
     @Slot(int, result=int)
     def setCursorPos(self, newPos: int) -> int:

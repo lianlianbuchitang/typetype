@@ -226,6 +226,9 @@ class TypingService(QObject):
         self._set_read_only(False)
 
     # ==== 只读属性 ====
+    @property
+    def cursor_position(self) -> int:
+        return self.score_data.char_count
 
     @property
     def text_read_only(self) -> bool:
