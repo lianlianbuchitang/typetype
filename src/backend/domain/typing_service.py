@@ -1,11 +1,13 @@
 from datetime import datetime
+from time import time
 
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtQuick import QQuickTextDocument
 
 from ..application.usecases.score_usecase import ScoreUseCase
-from ..typing.score_data import ScoreData
+from ..models.char_stats import CharStat
+from ..models.score_data import ScoreData
 
 
 class TypingService(QObject):
@@ -46,6 +48,9 @@ class TypingService(QObject):
         self._start_status = False
         self._text_read_only = False  # LowerPane 只读状态：打字中可编辑，打印完只读
         self._wrong_char_prefix_sum: list[int] = []
+
+        self._char_stats: dict[str, CharStat] = {}
+        self._last_commit_time_ms: float = 0.0
 
         # 文本上色相关
         self._rich_doc = None
@@ -160,6 +165,7 @@ class TypingService(QObject):
 
     def _start(self) -> None:
         """开始打字"""
+        self._last_commit_time_ms = time() * 1000
         self._second_timer.start()
         self._start_status = True
 
@@ -168,6 +174,32 @@ class TypingService(QObject):
         self._second_timer.stop()
         self._start_status = False
 
+    def _update_char_at_pos(self, pos: int, char: str, is_error: bool) -> None:
+        """更新单个位置的 wrong_char_prefix_sum 并着色。
+
+        用于 growLength > 0 的合并循环中，将 _update_wrong_num 的
+        prefix_sum 计算和 _color_text 的着色合并到一次遍历。
+        """
+        pre_sum = self._wrong_char_prefix_sum[pos - 1] if pos > 0 else 0
+        self._wrong_char_prefix_sum[pos] = pre_sum + (1 if is_error else 0)
+        self._score_data.wrong_char_count = self._wrong_char_prefix_sum[pos]
+        self._color_text(pos, 1, self._correct_fmt if not is_error else self._error_fmt)
+
+    def _check_typing_complete(self) -> None:
+        """检查是否所有目标字符都已打完，打完则停止计时并触发结束事件。"""
+        if self._score_data.char_count >= self._total_chars and self._start_status:
+            self._stop()
+            self._set_read_only(True)
+            self.typingEnded.emit()
+            self.historyRecordUpdated.emit(self._get_new_record())
+
+    def _emit_typing_signals(self) -> None:
+        """批量发射打字统计变化信号，通知 QML 更新显示。"""
+        self.charNumChanged.emit()
+        self.codeLengthChanged.emit()
+        self.typeSpeedChanged.emit()
+        self.keyStrokeChanged.emit()
+
     def _clear(self) -> None:
         """清空数据"""
         self._reset_score_data()
@@ -175,6 +207,7 @@ class TypingService(QObject):
         self.keyStrokeChanged.emit()
         self.totalTimeChanged.emit()
         self.typeSpeedChanged.emit()
+        self._last_commit_time_ms = 0.0
 
     # ── 对外公开的 Slot 方法（供 Bridge 调用） ──
 
@@ -184,28 +217,64 @@ class TypingService(QObject):
             self._accumulate_key_num()
 
     def handleCommittedText(self, s: str, growLength: int) -> None:
-        """处理提交的文本(可能增也可能删)
+        """处理文本提交事件（增字符 / 删字符 / 替换）。
 
-        @param s: 从光标位置到已打文本末尾的一段字符串
-        @param growLength: 已打文本的长度变化值
+        @param s: 本次提交的子串（从 beginPos 到文本末尾）
+        @param growLength: 字符数增量（>0 增, <0 删, =0 替换）
         """
+        # beginPos: 本次提交在目标文本中的起始位置
         beginPos = self._score_data.char_count + growLength - len(s)
-        self._update_current_char_num(s, growLength, beginPos)
 
-        # 渲染变动文本
-        for i in range(len(s)):
-            if beginPos + i >= self._total_chars:
-                break
+        if growLength > 0:
+            # ── 新增字符 ──
+            # 计算单字符耗时：总耗时均摊到每个新增字符
+            now_ms = time() * 1000
+            if self._last_commit_time_ms == 0.0:
+                self._last_commit_time_ms = now_ms
+            elapsed_ms = now_ms - self._last_commit_time_ms
+            per_char_ms = elapsed_ms / growLength
 
-            if s[i] == self._plain_doc[beginPos + i]:
-                self._color_text(beginPos + i, 1, self._correct_fmt)
-            else:
-                self._color_text(beginPos + i, 1, self._error_fmt)
+            # 单次遍历完成三件事：char_stats 累积 / prefix_sum 更新 / 着色
+            for i in range(len(s)):
+                pos = beginPos + i
+                if pos >= self._total_chars:
+                    break
+                char = self._plain_doc[pos]
+                is_error = s[i] != char
+                # 仅前 growLength 个字符为新增，累积 char_stats
+                if i < growLength:
+                    self._char_stats.setdefault(char, CharStat(char)).accumulate(
+                        per_char_ms, is_error
+                    )
+                # 更新 prefix_sum 并着色（新增 + 已存在的位置都需处理）
+                self._update_char_at_pos(pos, char, is_error)
 
-        if growLength < 0:
-            char_count = self._score_data.char_count
-            for i in range(char_count, char_count - growLength):
-                self._color_text(i, 1, self._no_fmt)
+            self._last_commit_time_ms = now_ms
+            self._score_data.char_count += growLength
+            self._emit_typing_signals()
+            self._check_typing_complete()
+        else:
+            # ── 删除字符 / 纯替换 ──
+            # 更新 char_count、wrong_char_prefix_sum，计算错误数
+            self._update_current_char_num(s, growLength, beginPos)
+
+            # 重新着色（仅对 s 覆盖的区间）
+            for i in range(len(s)):
+                if beginPos + i >= self._total_chars:
+                    break
+                self._color_text(
+                    beginPos + i,
+                    1,
+                    self._correct_fmt
+                    if s[i] == self._plain_doc[beginPos + i]
+                    else self._error_fmt,
+                )
+
+            # 删除时清除被删除位置的着色（char_count 已由 _update_current_char_num 更新）
+            if growLength < 0:
+                char_count = self._score_data.char_count
+                for i in range(char_count, char_count - growLength):
+                    self._color_text(i, 1, self._no_fmt)
 
     def handleLoadedText(self, quickDoc: QQuickTextDocument) -> None:
         """处理载文内容"""
@@ -277,6 +346,10 @@ class TypingService(QObject):
     @property
     def total_time(self) -> float:
         return self._score_data.time
+
+    @property
+    def char_stats(self) -> dict[str, CharStat]:
+        return self._char_stats
 
     def get_score_message(self) -> str:
         return self._score_usecase.build_score_message(self._score_data)

@@ -1,5 +1,5 @@
 from ...models.dto.score_dto import HistoryRecordDTO, ScoreSummaryDTO
-from ...typing.score_data import ScoreData
+from ...models.score_data import ScoreData
 from ..ports.clipboard import ClipboardWriter
 
 

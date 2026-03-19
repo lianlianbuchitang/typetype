@@ -1,7 +1,7 @@
 """ScoreUseCase 测试。"""
 
 from src.backend.application.usecases.score_usecase import ScoreUseCase
-from src.backend.typing.score_data import ScoreData
+from src.backend.models.score_data import ScoreData
 
 
 class DummyClipboard:

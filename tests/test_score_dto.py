@@ -3,7 +3,7 @@
 """
 
 from src.backend.models.dto.score_dto import HistoryRecordDTO, ScoreSummaryDTO
-from src.backend.typing.score_data import ScoreData
+from src.backend.models.score_data import ScoreData
 
 
 class TestHistoryRecordDTO:
