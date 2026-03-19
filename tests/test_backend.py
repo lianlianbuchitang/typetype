@@ -4,7 +4,7 @@ Bridge 模块测试（包含原 Backend 功能）
 
 from PySide6.QtCore import QObject, Signal
 
-from src.backend.text_properties import Bridge
+from src.backend.bridge import Bridge
 from src.backend.config.runtime_config import RuntimeConfig
 from src.backend.domain.typing_service import TypingService
 from src.backend.domain.text_load_service import TextLoadService

@@ -18,7 +18,7 @@ from src.backend.integration.sai_wen_service import SaiWenService
 from src.backend.domain.auth_service import AuthService
 from src.backend.domain.text_load_service import TextLoadService
 from src.backend.domain.typing_service import TypingService
-from src.backend.text_properties import Bridge
+from src.backend.bridge import Bridge
 from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
 

@@ -99,7 +99,7 @@ typetype/
 │   │   ├── typing/
 │   │   ├── utils/
 │   │   ├── workers/
-│   │   └── text_properties.py
+│   │   └── bridge.py
 │   └── qml/
 └── tests/
 ```

@@ -32,7 +32,7 @@ files = [
     "src/backend/security/crypt.py",
     "src/backend/integration/global_key_listener.py",
     "src/backend/integration/system_identifier.py",
-    "src/backend/text_properties.py",
+    "src/backend/bridge.py",
     "src/backend/application/usecases/score_usecase.py",
     "src/backend/application/usecases/text_usecase.py",
     "src/backend/application/ports/__init__.py",

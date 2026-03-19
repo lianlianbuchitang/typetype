@@ -70,7 +70,7 @@ src/backend/
 ├── typing/          # 打字数据模型
 ├── utils/           # 日志等工具
 ├── workers/         # 后台任务（避免阻塞 UI）
-└── text_properties.py  # Bridge（appBridge）
+└── bridge.py  # Bridge（appBridge）
 
 RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 ```
