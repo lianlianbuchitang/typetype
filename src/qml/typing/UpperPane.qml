@@ -11,6 +11,14 @@ Pane {
     property alias fontSize: textArea.font.pixelSize  // 暴露字体大小属性
     property alias fontFamily: textArea.font.family
 
+    // 监听 appBridge 的光标位置变化，同步 UpperPane
+    Connections {
+        target: appBridge
+        function onCursorPosChanged(newPos) {
+            textArea.setCursorAndScroll(newPos);
+        }
+    }
+
     background: Rectangle {
         color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.cardColor : "#f5f5f5"
         border.color: Rin.Theme.currentTheme ? Rin.Theme.currentTheme.colors.dividerBorderColor : "#e0e0e0"
@@ -73,12 +81,6 @@ Pane {
 
                 // 设置滚动位置（通过 ScrollView 的 contentItem）
                 scrollView.contentItem.contentY = targetY;
-            }
-
-            onTextChanged: {
-                if (appBridge) {
-                    setCursorAndScroll(appBridge.getCursorPos());
-                }
             }
         }
     }

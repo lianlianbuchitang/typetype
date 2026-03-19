@@ -32,6 +32,7 @@ class Bridge(QObject):
     loggedinChanged = Signal()
     userInfoChanged = Signal()
     loginResult = Signal(bool, str)
+    cursorPosChanged = Signal(int)
 
     def __init__(
         self,
@@ -164,9 +165,10 @@ class Bridge(QObject):
     def getCursorPos(self) -> int:
         return self._typing_service.cursor_position
 
-    @Slot(int, result=int)
-    def setCursorPos(self, newPos: int) -> int:
-        return newPos
+    @Slot(int)
+    def setCursorPos(self, newPos: int):
+        self._typing_service.setCursorPosition(newPos)
+        self.cursorPosChanged.emit(newPos)
 
     @Slot(result=str)
     def getScoreMessage(self) -> str:

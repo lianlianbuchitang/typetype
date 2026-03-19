@@ -42,6 +42,7 @@ class TypingService(QObject):
         self.timeInterval = time_interval
 
         self._total_chars = 0
+        self._cursor_position = 0
         self._start_status = False
         self._text_read_only = False  # LowerPane 只读状态：打字中可编辑，打印完只读
         self._wrong_char_prefix_sum: list[int] = []
@@ -183,7 +184,11 @@ class TypingService(QObject):
             self._accumulate_key_num()
 
     def handleCommittedText(self, s: str, growLength: int) -> None:
-        """处理提交的文本(可能增也可能删)"""
+        """处理提交的文本(可能增也可能删)
+
+        @param s: 从光标位置到已打文本末尾的一段字符串
+        @param growLength: 已打文本的长度变化值
+        """
         beginPos = self._score_data.char_count + growLength - len(s)
         self._update_current_char_num(s, growLength, beginPos)
 
@@ -225,10 +230,13 @@ class TypingService(QObject):
         # 无论开始还是停止，都重置为可编辑状态
         self._set_read_only(False)
 
+    def setCursorPosition(self, newPos: int):
+        self._cursor_position = newPos
+
     # ==== 只读属性 ====
     @property
     def cursor_position(self) -> int:
-        return self.score_data.char_count
+        return self._cursor_position
 
     @property
     def text_read_only(self) -> bool:
