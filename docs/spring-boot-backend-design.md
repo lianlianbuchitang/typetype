@@ -20,9 +20,10 @@ QML UI → Bridge (appBridge) → UseCase → Port (Protocol) → Service/Integr
 
 | 实体 | 字段 | 位置 |
 |---|---|---|
-| `ScoreData` | time, key_stroke_count, char_count, wrong_char_count, date + 计算属性(speed, keyStroke, codeLength, accuracy, effectiveSpeed) | `src/backend/typing/score_data.py` |
+| `ScoreData` | time, key_stroke_count, char_count, wrong_char_count, date + 计算属性(speed, keyStroke, codeLength, accuracy, effectiveSpeed) | `src/backend/models/score_data.py` |
+| `CharStat` | char, char_count, error_char_count, total_ms, min_ms, max_ms, last_seen + 计算属性(avg_ms, error_rate) + merge() | `src/backend/models/char_stats.py` |
 | `TextSource` (配置) | key, label, type(network/local), url/local_path | `src/backend/config/runtime_config.py` |
-| `ScoreSummaryDTO` / `HistoryRecordDTO` | DTO 层，从 ScoreData 映射 | `src/backend/models/score_dto.py` |
+| `ScoreSummaryDTO` / `HistoryRecordDTO` | DTO 层，从 ScoreData 映射 | `src/backend/models/dto/score_dto.py` |
 
 ### 1.3 关键端口协议
 
