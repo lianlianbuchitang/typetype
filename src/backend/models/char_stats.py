@@ -42,6 +42,7 @@ class CharStat:
 
         if is_error:
             self.error_char_count += 1
+            self.total_ms += 500  # 防止因瞬时按错导致累计时长太短，特在此罚时
 
         # 只有打字正确才考虑更新最短耗时
         if not is_error and (self.min_ms == 0.0 or keystroke_ms < self.min_ms):
