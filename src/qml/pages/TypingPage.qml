@@ -59,7 +59,7 @@ Item {
     // 加载 阅读/跟打 字体（UI 字体由 main.py 中 app.setFont() 全局设定）
     FontLoader {
         id: readerFontLoader
-        source: resourceBaseUrl + "fonts/LXGWWenKai-Regular.ttf"
+        source: resourceBaseUrl + "fonts/LXGWWenKai-Regular-subset.ttf"
     }
 
     // 阅读区字体配置
@@ -74,11 +74,6 @@ Item {
     // StackView 每次导航都会 createObject 创建新页面实例，旧实例不会被销毁。
     // 因此所有 Connections 必须加 enabled 守卫，只在页面处于栈顶时才响应信号，
     // 否则多个实例同时响应同一信号会导致重复弹窗等问题。
-
-    // 页面离开时停止打字并重置状态（打字是连续过程，切走 = 中断）
-    StackView.onDeactivating: {
-        appBridge.requestLoadText("builtin_demo");
-    }
 
     Connections {
         target: appBridge

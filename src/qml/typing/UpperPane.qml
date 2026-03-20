@@ -69,6 +69,9 @@ Pane {
             }
 
             function setCursorAndScroll(cursorPos) {
+                if (cursorPos < 0 || cursorPos > textArea.length) {
+                    return;
+                }
                 textArea.cursorPosition = cursorPos;
 
                 // 获取光标所在行的矩形信息
