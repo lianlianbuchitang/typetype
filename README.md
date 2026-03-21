@@ -175,12 +175,13 @@ typing_service = TypingService(char_stats_service=char_stats_service)
 load_text_usecase = LoadTextUseCase(gateway=text_gateway)
 auth_service = AuthService(...)
 char_stats_service = CharStatsService(repository=char_stats_repo)
+auth_adapter = AuthAdapter(auth_service=auth_service)
+char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
 bridge = Bridge(
     typing_adapter=typing_adapter,
     text_adapter=text_adapter,
-    auth_service=auth_service,
-    runtime_config=runtime_config,
-    char_stats_service=char_stats_service,
+    auth_adapter=auth_adapter,
+    char_stats_adapter=char_stats_adapter,
 )
 ```
 

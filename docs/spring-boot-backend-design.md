@@ -85,7 +85,6 @@ typing_usecase = TypingUseCase(score_gateway=ScoreGateway(clipboard=clipboard))
 bridge = Bridge(
     text_adapter=text_adapter,
     typing_adapter=typing_adapter,
-    runtime_config=runtime_config,
 )
 ```
 

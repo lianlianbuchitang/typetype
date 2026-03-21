@@ -181,14 +181,15 @@ auth_service = AuthService(auth_provider=api_client, ...)
 # Adapters
 typing_adapter = TypingAdapter(typing_service=typing_service, typing_usecase=typing_usecase)
 text_adapter = TextAdapter(text_gateway=text_gateway, load_text_usecase=load_text_usecase)
+auth_adapter = AuthAdapter(auth_service=auth_service)
+char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
 
 # Bridge
 bridge = Bridge(
     typing_adapter=typing_adapter,
     text_adapter=text_adapter,
-    auth_service=auth_service,
-    runtime_config=runtime_config,
-    char_stats_service=char_stats_service,
+    auth_adapter=auth_adapter,
+    char_stats_adapter=char_stats_adapter,
 )
 ```
 
