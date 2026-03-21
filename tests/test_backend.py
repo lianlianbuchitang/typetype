@@ -3,7 +3,6 @@
 from PySide6.QtCore import QObject, Signal
 
 from src.backend.presentation.bridge import Bridge
-from src.backend.config.runtime_config import RuntimeConfig
 from src.backend.domain.services.char_stats_service import CharStatsService
 from src.backend.domain.services.typing_service import TypingService
 from src.backend.domain.services.auth_service import AuthService
@@ -14,6 +13,8 @@ from src.backend.application.gateways.score_gateway import ScoreGateway
 from src.backend.application.gateways.text_gateway import TextGateway
 from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.text_adapter import TextAdapter
+from src.backend.presentation.adapters.auth_adapter import AuthAdapter
+from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
 from src.backend.integration.global_key_listener import GlobalKeyListener
 from unittest.mock import MagicMock
 from typing import cast
@@ -54,41 +55,50 @@ class TestBridgeSpecialPlatform:
             load_text_usecase=load_text_usecase,
         )
 
-        return typing_adapter, text_adapter, auth_service
+        auth_adapter = AuthAdapter(auth_service=auth_service)
+        char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
+
+        return typing_adapter, text_adapter, auth_adapter, char_stats_adapter
 
     def test_bridge_without_listener(self):
         """未传监听器时，应为普通平台"""
-        typing_adapter, text_adapter, auth_service = self._create_mock_services()
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
         bridge = Bridge(
             typing_adapter=typing_adapter,
             text_adapter=text_adapter,
-            auth_service=auth_service,
-            runtime_config=RuntimeConfig(),
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
             key_listener=None,
         )
         assert bridge.isSpecialPlatform is False
 
     def test_bridge_with_listener(self):
         """传入监听器时，应标记为特殊平台"""
-        typing_adapter, text_adapter, auth_service = self._create_mock_services()
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
         listener = DummyListener()
         bridge = Bridge(
             typing_adapter=typing_adapter,
             text_adapter=text_adapter,
-            auth_service=auth_service,
-            runtime_config=RuntimeConfig(),
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
             key_listener=cast(GlobalKeyListener, listener),
         )
         assert bridge.isSpecialPlatform is True
 
     def test_key_received_calls_handle_pressed_when_focused(self):
-        typing_adapter, text_adapter, auth_service = self._create_mock_services()
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
         listener = DummyListener()
         bridge = Bridge(
             typing_adapter=typing_adapter,
             text_adapter=text_adapter,
-            auth_service=auth_service,
-            runtime_config=RuntimeConfig(),
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
             key_listener=cast(GlobalKeyListener, listener),
         )
         typing_adapter.handleStartStatus(True)
@@ -97,13 +107,15 @@ class TestBridgeSpecialPlatform:
         assert typing_adapter.score_data.key_stroke_count == 1
 
     def test_key_received_ignored_when_not_focused(self):
-        typing_adapter, text_adapter, auth_service = self._create_mock_services()
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
         listener = DummyListener()
         bridge = Bridge(
             typing_adapter=typing_adapter,
             text_adapter=text_adapter,
-            auth_service=auth_service,
-            runtime_config=RuntimeConfig(),
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
             key_listener=cast(GlobalKeyListener, listener),
         )
         typing_adapter.handleStartStatus(True)

@@ -91,7 +91,9 @@ class TypingAdapter(QObject):
         ):
             self._typing_service.stop()
             self._second_timer.stop()
-            self._typing_service.set_read_only(True)
+            changed = self._typing_service.set_read_only(True)
+            if changed:
+                self.readOnlyChanged.emit()
             self._typing_service.flush_char_stats()
             self.typingEnded.emit()
             record = self._typing_service.get_history_record()
@@ -144,6 +146,9 @@ class TypingAdapter(QObject):
         self._typing_service.clear()
         self._typing_service.state.is_started = False
         self._emit_typing_signals()
+        changed = self._typing_service.set_read_only(False)
+        if changed:
+            self.readOnlyChanged.emit()
 
     def handleStartStatus(self, status: bool) -> None:
         if self._typing_service.state.is_started != status:

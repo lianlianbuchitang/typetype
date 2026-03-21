@@ -9,19 +9,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property, QObject, QThreadPool, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtQuick import QQuickTextDocument
 
-from ..config.runtime_config import RuntimeConfig
-from ..domain.services.auth_service import AuthService
 from ..integration.global_key_listener import GlobalKeyListener
 from ..utils.logger import log_info
-from ..workers.weak_chars_query_worker import WeakCharsQueryWorker
 
 if TYPE_CHECKING:
-    from ..domain.services.char_stats_service import CharStatsService
+    from .adapters.auth_adapter import AuthAdapter
+    from .adapters.char_stats_adapter import CharStatsAdapter
     from .adapters.text_adapter import TextAdapter
     from .adapters.typing_adapter import TypingAdapter
 
@@ -52,30 +50,27 @@ class Bridge(QObject):
         self,
         typing_adapter: TypingAdapter,
         text_adapter: TextAdapter,
-        auth_service: AuthService,
-        runtime_config: RuntimeConfig,
+        auth_adapter: AuthAdapter,
+        char_stats_adapter: CharStatsAdapter,
         key_listener: GlobalKeyListener | None = None,
-        char_stats_service: CharStatsService | None = None,
     ):
         super().__init__()
         self._typing_adapter = typing_adapter
         self._text_adapter = text_adapter
-        self._auth_service = auth_service
-        self._runtime_config = runtime_config
+        self._auth_adapter = auth_adapter
+        self._char_stats_adapter = char_stats_adapter
         self._key_listener = key_listener
-        self._char_stats_service = char_stats_service
         self._is_special_platform = key_listener is not None
         self._lower_pane_focused = False
 
         self._connect_typing_signals()
         self._connect_text_load_signals()
+        self._connect_auth_signals()
+        self._connect_char_stats_signals()
         self._connect_key_listener()
 
         self.specialPlatformConfirmed.emit(self._is_special_platform)
         log_info(f"[Bridge] 检测到平台特殊性: {self._is_special_platform}")
-
-    def _on_weak_chars_loaded(self, data: list[dict[str, Any]]) -> None:
-        self.weakestCharsLoaded.emit(data)
 
     def _connect_typing_signals(self) -> None:
         self._typing_adapter.typeSpeedChanged.connect(self.typeSpeedChanged.emit)
@@ -93,6 +88,16 @@ class Bridge(QObject):
         self._text_adapter.textLoaded.connect(self.textLoaded.emit)
         self._text_adapter.textLoadFailed.connect(self.textLoadFailed.emit)
         self._text_adapter.textLoadingChanged.connect(self.textLoadingChanged.emit)
+
+    def _connect_auth_signals(self) -> None:
+        self._auth_adapter.loggedinChanged.connect(self.loggedinChanged.emit)
+        self._auth_adapter.userInfoChanged.connect(self.userInfoChanged.emit)
+        self._auth_adapter.loginResult.connect(self.loginResult.emit)
+
+    def _connect_char_stats_signals(self) -> None:
+        self._char_stats_adapter.weakestCharsLoaded.connect(
+            self.weakestCharsLoaded.emit
+        )
 
     def _connect_key_listener(self) -> None:
         if self._key_listener:
@@ -146,15 +151,15 @@ class Bridge(QObject):
 
     @Property(bool, notify=loggedinChanged)
     def loggedin(self) -> bool:
-        return self._auth_service.is_logged_in
+        return self._auth_adapter.loggedin
 
     @Property(str, notify=userInfoChanged)
     def userNickname(self) -> str:
-        return self._auth_service.current_nickname
+        return self._auth_adapter.user_nickname
 
     @Property(str, notify=userInfoChanged)
     def currentUser(self) -> str:
-        return self._auth_service.current_username
+        return self._auth_adapter.current_user
 
     @Property(bool, notify=specialPlatformConfirmed)
     def isSpecialPlatform(self) -> bool:
@@ -221,30 +226,15 @@ class Bridge(QObject):
 
     @Slot(str, str)
     def login(self, username: str, password: str) -> None:
-        success, message, _ = self._auth_service.login(username, password)
-        if success:
-            self.loggedinChanged.emit()
-            self.userInfoChanged.emit()
-        self.loginResult.emit(success, message)
+        self._auth_adapter.login(username, password)
 
     @Slot()
     def logout(self) -> None:
-        self._auth_service.logout()
-        self.loggedinChanged.emit()
-        self.userInfoChanged.emit()
+        self._auth_adapter.logout()
 
     def initializeLoginState(self) -> None:
-        self._auth_service.initialize()
-        if self._auth_service.is_logged_in:
-            self.loggedinChanged.emit()
-            self.userInfoChanged.emit()
+        self._auth_adapter.initialize_login_state()
 
     @Slot()
     def loadWeakChars(self) -> None:
-        if not self._char_stats_service:
-            self.weakestCharsLoaded.emit([])
-            return
-        worker = WeakCharsQueryWorker(self._char_stats_service, 10)
-        worker.signals.succeeded.connect(self._on_weak_chars_loaded)
-        worker.signals.failed.connect(lambda msg: log_info(f"[Bridge] {msg}"))
-        QThreadPool.globalInstance().start(worker)
+        self._char_stats_adapter.loadWeakChars()

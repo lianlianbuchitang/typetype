@@ -28,6 +28,8 @@ from src.backend.integration.sqlite_char_stats_repository import (
 from src.backend.integration.system_identifier import SystemIdentifier
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 from src.backend.presentation.adapters.typing_adapter import TypingAdapter
+from src.backend.presentation.adapters.auth_adapter import AuthAdapter
+from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
 from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
 
@@ -133,6 +135,8 @@ def main():
         text_gateway=text_gateway,
         load_text_usecase=load_text_usecase,
     )
+    auth_adapter = AuthAdapter(auth_service=auth_service)
+    char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
 
     # Platform detection
     system_identifier = SystemIdentifier()
@@ -149,10 +153,9 @@ def main():
     bridge = Bridge(
         typing_adapter=typing_adapter,
         text_adapter=text_adapter,
-        auth_service=auth_service,
-        runtime_config=runtime_config,
+        auth_adapter=auth_adapter,
+        char_stats_adapter=char_stats_adapter,
         key_listener=key_listener,
-        char_stats_service=char_stats_service,
     )
 
     bridge.initializeLoginState()
