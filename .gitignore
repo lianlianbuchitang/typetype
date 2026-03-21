@@ -72,3 +72,4 @@ pysidedeploy.spec
 *.dylib
 *.dll
 data/
+config/config.json
