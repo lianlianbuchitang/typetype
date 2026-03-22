@@ -3,6 +3,8 @@ import platform
 import subprocess
 from typing import Tuple
 
+from ..utils.logger import log_warning
+
 
 class SystemIdentifier:
     def get_system_info(self) -> Tuple[str, str]:
@@ -57,7 +59,7 @@ class SystemIdentifier:
                         display_server = "Wayland"
                     elif session_type == "x11":
                         display_server = "X11"
-            except Exception:
-                pass
+            except Exception as e:
+                log_warning(f"检测显示服务器失败: {e}")
 
         return (os_name, display_server)

@@ -12,6 +12,7 @@
 
 from PySide6.QtCore import QObject, QThreadPool, Signal, Slot
 
+from ...application.exception_handler import GlobalExceptionHandler
 from ...application.gateways.text_gateway import TextGateway
 from ...application.usecases.load_text_usecase import LoadTextUseCase
 from ...workers.text_load_worker import TextLoadWorker
@@ -96,7 +97,9 @@ class TextAdapter(QObject):
             else:
                 self._on_text_load_failed(f"加载文本失败：{result.error_message}")
         except Exception as e:
-            self._on_text_load_failed(f"加载文本失败：{str(e)}")
+            self._on_text_load_failed(
+                f"加载文本失败：{GlobalExceptionHandler.handle(e)}"
+            )
         finally:
             self._set_text_loading(False)
 
@@ -114,7 +117,9 @@ class TextAdapter(QObject):
             else:
                 self._on_text_load_failed(f"加载文本失败：{result.error_message}")
         except Exception as e:
-            self._on_text_load_failed(f"加载文本失败：{str(e)}")
+            self._on_text_load_failed(
+                f"加载文本失败：{GlobalExceptionHandler.handle(e)}"
+            )
         finally:
             self._set_text_loading(False)
 

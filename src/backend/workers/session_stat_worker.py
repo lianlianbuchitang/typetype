@@ -1,4 +1,5 @@
 from ..application.ports.ranking_repository import RankingRepository
+from ..infrastructure.network_errors import SubmitScoreError
 from ..models.entity.session_stat import SessionStat
 from .base_worker import BaseWorker
 
@@ -18,5 +19,5 @@ class SessionStatWorker(BaseWorker):
     def _submit_score(self) -> bool:
         success = self._ranking_repository.submit_score(self._session_stat)
         if not success:
-            raise Exception("提交成绩失败")
+            raise SubmitScoreError("成绩提交失败")
         return success

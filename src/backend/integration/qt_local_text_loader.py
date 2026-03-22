@@ -23,8 +23,8 @@ class QtLocalTextLoader(LocalTextLoader):
                 return data.decode("utf-8")
             except UnicodeDecodeError:
                 return data.decode("gb18030")
-        except Exception:
-            return None
+        except IOError:
+            raise
         finally:
             text_file.close()
 

@@ -17,7 +17,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtQuick import QQuickTextDocument
 
-from ...application.usecases.typing_usecase import TypingUseCase
+from ...application.gateways.score_gateway import ScoreGateway
 from ...domain.services.typing_service import TypingService
 
 
@@ -37,12 +37,12 @@ class TypingAdapter(QObject):
     def __init__(
         self,
         typing_service: TypingService,
-        typing_usecase: TypingUseCase,
+        score_gateway: ScoreGateway,
         time_interval: float = 0.15,
     ):
         super().__init__()
         self._typing_service = typing_service
-        self._typing_usecase = typing_usecase
+        self._score_gateway = score_gateway
         self.timeInterval = time_interval
 
         # Qt 相关
@@ -210,7 +210,7 @@ class TypingAdapter(QObject):
         self._typing_service.set_cursor_position(new_pos)
 
     def get_score_message(self) -> str:
-        return self._typing_usecase.build_score_message(self._typing_service.score_data)
+        return self._score_gateway.build_score_message(self._typing_service.score_data)
 
     def copy_score_message(self) -> None:
-        self._typing_usecase.copy_score_to_clipboard(self._typing_service.score_data)
+        self._score_gateway.copy_score_to_clipboard(self._typing_service.score_data)

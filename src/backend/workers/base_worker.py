@@ -3,18 +3,16 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
+from ..application.exception_handler import GlobalExceptionHandler
+
 
 class WorkerSignals(QObject):
-    """通用后台任务信号。"""
-
     succeeded = Signal(object)
     failed = Signal(str)
     finished = Signal()
 
 
 class BaseWorker(QRunnable):
-    """通用后台任务执行器。"""
-
     def __init__(self, task: Callable[[], Any], error_prefix: str = "任务执行失败"):
         super().__init__()
         self._task = task
@@ -27,6 +25,7 @@ class BaseWorker(QRunnable):
             result = self._task()
             self.signals.succeeded.emit(result)
         except Exception as e:
-            self.signals.failed.emit(f"{self._error_prefix}: {str(e)}")
+            msg = GlobalExceptionHandler.handle(e)
+            self.signals.failed.emit(f"{self._error_prefix}：{msg}")
         finally:
             self.signals.finished.emit()
