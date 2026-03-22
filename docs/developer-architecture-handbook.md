@@ -128,8 +128,10 @@ src/backend/
 ### 5.4 Integration / Infrastructure
 
 - `SaiWenTextFetcher`：第三方文本接口实现
+- `RemoteCatalogTextFetcher`：远程文本目录获取实现
 - `QtLocalTextLoader`：本地文本读取实现
 - `SqliteCharStatsRepository`：字符统计持久化实现
+- `ApiClientAuthProvider`：基于 ApiClient 的认证实现
 - `ApiClient`：HTTP 客户端与错误模型
 
 ---

@@ -54,7 +54,7 @@ QML UI → Presentation (Bridge + Adapters)
       → network: 创建 LoadTextWorker → QThreadPool 异步执行
         → LoadTextUseCase.load(source_key)
           → TextFetcher.fetch_text(url)     [当前实现: SaiWenTextFetcher]
-            → ApiClient.post_json(url, payload)
+            → ApiClient.request("POST", url, json=payload)
               → httpx.Client.request()      [HTTP 请求]
       → local: 同步执行
         → LoadTextUseCase.load(source_key)
@@ -584,7 +584,7 @@ class SpringBootTextService:
 
     def fetch_text(self, source_key: str) -> str | None:
         url = f"{self._base_url}/api/v1/texts/random"
-        data = self._api_client.get_json(url, params={"sourceKey": source_key})
+        data = self._api_client.request("GET", url, params={"sourceKey": source_key})
         if data is None:
             last_error = self._api_client.last_error
             if last_error:

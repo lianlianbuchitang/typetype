@@ -311,7 +311,7 @@ src/backend/
 ├── domain/
 │   └── services/      # TypingService, AuthService, CharStatsService
 ├── infrastructure/    # ApiClient, NetworkErrors
-├── integration/       # SaiWenTextFetcher, CatalogService, SqliteCharStatsRepository
+├── integration/       # SaiWenTextFetcher, RemoteCatalogTextFetcher, SqliteCharStatsRepository
 ├── models/
 │   ├── entity/        # CharStat, SessionStat
 │   ├── dto/           # ScoreSummaryDTO, HistoryRecordDTO

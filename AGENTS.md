@@ -63,14 +63,15 @@ Windows 建议追加：`--assume-yes-for-downloads --windows-console-mode=disabl
 ```
 src/backend/
 ├── application/
-│   ├── gateways/      # Port 适配 + 异常转换（TextGateway, ScoreGateway）
+│   ├── exception_handler.py  # 全局异常处理（网络异常 → 用户友好消息）
+│   ├── gateways/      # Port 适配（TextGateway, ScoreGateway）
 │   ├── ports/         # 协议：Clipboard/TextFetcher/LocalTextLoader/AsyncExecutor
-│   └── usecases/      # 业务编排：LoadTextUseCase, TypingUseCase
+│   └── usecases/      # 业务编排：LoadTextUseCase（仅此一个有编排价值的）
 ├── config/            # RuntimeConfig
 ├── domain/
 │   └── services/      # 纯业务逻辑（TypingService, AuthService, CharStatsService）
 ├── infrastructure/    # ApiClient 与网络异常模型
-├── integration/       # 内外集成（SaiWenTextFetcher, CatalogService, SqliteCharStatsRepository）
+├── integration/       # 内外集成（SaiWenTextFetcher, RemoteCatalogTextFetcher, SqliteCharStatsRepository）
 ├── models/            # 领域模型（SessionStat, CharStat, TextSource, DTO）
 ├── presentation/
 │   ├── adapters/      # Qt 适配层（TypingAdapter, TextAdapter）
@@ -99,19 +100,20 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
                           │
 ┌─────────────────────────▼───────────────────────────────┐
 │                     Application Layer                   │
-│        UseCases: LoadTextUseCase, TypingUseCase         │
+│        UseCases: LoadTextUseCase（路由+业务验证）         │
 │        Gateways: TextGateway, ScoreGateway              │
+│        ExceptionHandler: GlobalExceptionHandler        │
 └─────────┬───────────────────────────┬───────────────────┘
-          │                           │
-          ▼                           ▼
+           │                           │
+           ▼                           ▼
 ┌─────────────────────────┐   ┌───────────────────────────┐
 │      Domain Services    │   │          Ports            │
 │ (纯业务逻辑，无 Qt 依赖)  │   │   (接口协议 / 抽象依赖)    │
 │ Typing/Auth/CharStats   │   │ TextFetcher, Clipboard... │
 └─────────┬───────────────┘   └───────────┬───────────────┘
-          │                               │
-          └──────────────┬────────────────┘
-                         ▼
+           │                               │
+           └──────────────┬────────────────┘
+                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  Integration / Infrastructure           │
 │   SaiWenTextFetcher, SqliteRepo, ApiClient, QtLoader   │
@@ -124,8 +126,10 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 - QML 通过 `appBridge` 与后端交互。
 - **Domain Services 是纯业务逻辑**，无 Qt 依赖，易于测试。
 - **Presentation Layer = Bridge + Adapters**，统一封装 QML 与 Qt 交互细节。
-- **Gateways 封装 Port 适配和异常转换**。
-- **UseCases 编排业务流程**，协调多个 Service/Gateway。
+- **Gateways 封装 Port 适配**（不含异常转换）。
+- **GlobalExceptionHandler 集中处理异常语义**（网络异常 → 用户友好消息），类似 Spring Boot 的 `@ControllerAdvice`。
+- **BaseWorker 统一捕获后台任务异常**，调用 GlobalExceptionHandler 转换后发射 `failed` 信号。
+- **UseCases 编排业务流程**（路由 + 业务验证），异常上浮由 BaseWorker 统一处理。
 - 文本加载支持 `network` 与 `local` 两类来源。
 - UI 框架使用 RinUI（vendored），提供主题、组件和暗色模式支持。
 - UI 字体由 `main.py` 中 `app.setFont()` 全局设置，QML 层不再传递字体属性。
@@ -138,13 +142,31 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 | **Domain Services** | TypingService | 打字统计纯逻辑（SessionStat 状态、键数累积） |
 | | AuthService | 登录认证（login/logout、token 验证与刷新） |
 | | CharStatsService | 字符维度统计（缓存、持久化、薄弱字查询） |
-| **Application** | LoadTextUseCase | 文本加载流程编排（异常转换、结果封装） |
-| | TypingUseCase | 打字流程编排（DTO 转换、剪贴板操作） |
+| **Application** | LoadTextUseCase | 文本加载路由 + 业务验证（异常上浮到 BaseWorker） |
+| | GlobalExceptionHandler | 网络异常 → 用户友好消息集中映射 |
 | **Gateways** | TextGateway | Port 适配 + 配置查询 |
 | | ScoreGateway | DTO 转换 + 剪贴板操作 |
+| **Workers** | BaseWorker | 统一捕获后台任务异常，调用 GlobalExceptionHandler |
 | **Presentation** | Bridge | QML 通信适配层：属性代理、信号转发、Slot 入口 |
 | | TypingAdapter | Qt 适配（计时器、文本着色、信号发射） |
 | | TextAdapter | Qt 适配（异步 Worker、信号发射） |
+
+### 架构约束（防止职责混乱）
+
+**绑定规则**：Presentation（Adapter/Bridge）只能依赖 Application 层（UseCase/Gateway），禁止依赖 Domain 层。
+
+**决策规则**：是否走 UseCase，看是否有**流程编排/分支判断**：
+- 有编排逻辑（如文本加载的来源路由）→ 必须走 UseCase
+- 纯转发、无分支（如 `ScoreGateway.build_score_message`）→ Adapter 可直连 Gateway
+- 有异常转换需求 → 由 BaseWorker + GlobalExceptionHandler 统一处理，UseCase 不捕获
+
+**边界规则**：
+- `GlobalExceptionHandler`：异常类型 → 用户可读消息的集中映射表
+- `BaseWorker`：统一捕获后台任务异常，调用 GlobalExceptionHandler 后发射信号
+- `LoadTextUseCase`：只做路由 + 业务验证，不捕获网络异常
+- `TypingService/AuthService/CharStatsService`：纯业务规则，无 Qt 依赖
+
+**扩展异常**：在 `exception_handler.py` 的 `_EXCEPTION_MESSAGE_MAP` 中添加新映射即可，无需修改 UseCase。
 
 ### Bridge 职责（薄适配层）
 
@@ -171,15 +193,21 @@ score_gateway = ScoreGateway(clipboard=clipboard)
 
 # UseCases
 load_text_usecase = LoadTextUseCase(gateway=text_gateway)
-typing_usecase = TypingUseCase(score_gateway=score_gateway)
 
 # Domain Services
 char_stats_service = CharStatsService(repo=char_stats_repo, async_executor=async_executor)
 typing_service = TypingService(char_stats_service=char_stats_service)
-auth_service = AuthService(auth_provider=api_client, ...)
+
+auth_provider = ApiClientAuthProvider(
+    api_client=api_client,
+    login_url=runtime_config.login_api_url,
+    validate_url=runtime_config.validate_api_url,
+    refresh_url=runtime_config.refresh_api_url,
+)
+auth_service = AuthService(auth_provider=auth_provider)
 
 # Adapters
-typing_adapter = TypingAdapter(typing_service=typing_service, typing_usecase=typing_usecase)
+typing_adapter = TypingAdapter(typing_service=typing_service, score_gateway=score_gateway)
 text_adapter = TextAdapter(text_gateway=text_gateway, load_text_usecase=load_text_usecase)
 auth_adapter = AuthAdapter(auth_service=auth_service)
 char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
@@ -211,9 +239,10 @@ bridge = Bridge(
 ## 4. 测试策略
 
 - 优先覆盖用例层与核心逻辑，不依赖真实 UI
-- 对网络错误、超时、解析异常必须有测试
+- 对网络错误、超时、解析异常必须有测试（由 GlobalExceptionHandler 统一转换）
 - 新增文本来源时，需同时补充：
-  - `LoadTextUseCase` 测试
+  - `LoadTextUseCase` 测试（业务验证、路由分支）
+  - `GlobalExceptionHandler` 测试（新异常类型 → 用户消息映射）
   - 对应 service/integration 测试
 
 ## 5. Spring Boot 服务接入规范（后续）
