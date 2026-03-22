@@ -20,3 +20,11 @@ class NetworkDecodeError(NetworkError):
 
 class NetworkRequestError(NetworkError):
     """请求发送错误。"""
+
+
+class CatalogServiceError(NetworkError):
+    """文本库服务错误。"""
+
+
+class SubmitScoreError(Exception):
+    """成绩提交失败。"""
