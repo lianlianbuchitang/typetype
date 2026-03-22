@@ -91,33 +91,6 @@ def test_request_success():
     assert client.last_error is None
 
 
-def test_get_json_success():
-    """get_json 应使用 GET 并返回 JSON。"""
-    dummy = DummyHttpClient(payload={"msg": "hello"})
-    client = _build_api_client_with_dummy(dummy)
-
-    result = client.get_json("https://example.com/get", params={"q": "k"})
-
-    assert result == {"msg": "hello"}
-    assert dummy.last_call["method"] == "GET"
-    assert dummy.last_call["url"] == "https://example.com/get"
-    assert dummy.last_call["params"] == {"q": "k"}
-    assert dummy.last_call["json"] is None
-
-
-def test_post_json_success():
-    """post_json 应使用 POST 并传递 json。"""
-    dummy = DummyHttpClient(payload={"code": 0})
-    client = _build_api_client_with_dummy(dummy)
-
-    result = client.post_json("https://example.com/post", {"x": 1})
-
-    assert result == {"code": 0}
-    assert dummy.last_call["method"] == "POST"
-    assert dummy.last_call["url"] == "https://example.com/post"
-    assert dummy.last_call["json"] == {"x": 1}
-
-
 def test_request_exception_returns_none():
     """request 异常时应返回 None。"""
     client = _build_api_client_with_dummy(DummyHttpClient(should_raise=True))

@@ -79,34 +79,6 @@ class ApiClient:
         """清除最近一次请求错误。"""
         self._last_error = None
 
-    def get_json(
-        self, url: str, params: dict[Any, Any] | None = None
-    ) -> dict[str, Any] | None:
-        """
-        发送 GET 请求并解析 JSON 响应。
-
-        参数:
-            url: 请求地址
-            params: 查询参数
-
-        返回:
-            解析后的 JSON 字典；失败时返回 None
-        """
-        return self.request("GET", url, params=params)
-
-    def post_json(self, url: str, payload: dict[Any, Any]) -> dict[str, Any] | None:
-        """
-        发送 POST JSON 请求。
-
-        参数:
-            url: 请求地址
-            payload: JSON 请求体
-
-        返回:
-            解析后的 JSON 字典；失败时返回 None
-        """
-        return self.request("POST", url, json=payload)
-
     def close(self) -> None:
         """关闭 HTTP 客户端并释放连接资源。"""
         self._client.close()
