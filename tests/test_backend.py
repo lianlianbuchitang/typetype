@@ -40,7 +40,11 @@ class TestBridgeSpecialPlatform:
         text_gateway.get_source_options.return_value = []
         text_gateway.get_default_source_key.return_value = "builtin_demo"
 
-        load_text_usecase = LoadTextUseCase(gateway=text_gateway)
+        load_text_usecase = LoadTextUseCase(
+            text_provider=MagicMock(),
+            local_text_loader=MagicMock(),
+            clipboard_reader=MagicMock(),
+        )
 
         typing_adapter = TypingAdapter(
             typing_service=typing_service,
