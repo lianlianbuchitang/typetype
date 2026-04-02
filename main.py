@@ -8,7 +8,6 @@ from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
 import RinUI.core.theme as _rinui_theme
 from RinUI import RinUIWindow
 from src.backend.application.gateways.score_gateway import ScoreGateway
-from src.backend.application.gateways.text_gateway import TextGateway
 from src.backend.application.usecases.load_text_usecase import LoadTextUseCase
 from src.backend.presentation.bridge import Bridge
 from src.backend.config.runtime_config import RuntimeConfig
@@ -29,6 +28,7 @@ from src.backend.presentation.adapters.text_adapter import TextAdapter
 from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.auth_adapter import AuthAdapter
 from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
+from src.backend.security.secure_storage import SecureStorage
 from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
 
 
@@ -65,7 +65,7 @@ def main():
     app = QGuiApplication(sys.argv)
 
     # 注册 UI 字体并设为应用默认字体。
-    # RinUI 内部组件（Button、ComboBox 等）在 Linux 上读取 Qt.application.font.family，
+    # RinUI 内部组件在 Linux 上读取 Qt.application.font.family，
     # 设置后所有 RinUI 控件自动使用 HarmonyOS 字体，无需逐个覆盖。
     _ui_font_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -85,18 +85,18 @@ def main():
     # Infrastructure 层
     api_client = ApiClient(timeout=runtime_config.api_timeout)
     local_text_loader = QtLocalTextLoader()
+
+    # JWT token 提供函数
+    def _get_jwt_token() -> str:
+        return SecureStorage.get_jwt("current_user") or ""
+
     text_provider = RemoteTextProvider(
         base_url=runtime_config.base_url,
         api_client=api_client,
+        token_provider=_get_jwt_token,
     )
 
     # Gateways
-    text_gateway = TextGateway(
-        runtime_config=runtime_config,
-        clipboard=clipboard,
-        local_text_loader=local_text_loader,
-        text_provider=text_provider,
-    )
     score_gateway = ScoreGateway(clipboard=clipboard)
 
     # UseCases
@@ -133,7 +133,7 @@ def main():
         score_gateway=score_gateway,
     )
     text_adapter = TextAdapter(
-        text_gateway=text_gateway,
+        runtime_config=runtime_config,
         load_text_usecase=load_text_usecase,
     )
     auth_adapter = AuthAdapter(auth_service=auth_service)

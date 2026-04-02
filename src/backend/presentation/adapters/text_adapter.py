@@ -1,8 +1,8 @@
 from PySide6.QtCore import QObject, QThreadPool, Signal, Slot
 
 from ...application.exception_handler import GlobalExceptionHandler
-from ...application.gateways.text_gateway import TextGateway
 from ...application.usecases.load_text_usecase import LoadTextUseCase
+from ...config.runtime_config import RuntimeConfig
 from ...models.config.text_source_config import TextSourceEntry
 from ...workers.text_load_worker import TextLoadWorker
 
@@ -17,11 +17,11 @@ class TextAdapter(QObject):
 
     def __init__(
         self,
-        text_gateway: TextGateway,
+        runtime_config: RuntimeConfig,
         load_text_usecase: LoadTextUseCase,
     ):
         super().__init__()
-        self._text_gateway = text_gateway
+        self._runtime_config = runtime_config
         self._load_text_usecase = load_text_usecase
         self._text_loading = False
         self._thread_pool = QThreadPool.globalInstance()
@@ -51,7 +51,7 @@ class TextAdapter(QObject):
         if self._text_loading:
             return
 
-        source = self._text_gateway.get_source(source_key)
+        source = self._runtime_config.get_text_source(source_key)
         if not source:
             self.textLoadFailed.emit(f"加载文本失败：未知载文来源({source_key})")
             return
@@ -113,7 +113,7 @@ class TextAdapter(QObject):
 
     def get_source_options(self) -> list[dict[str, str]]:
         """获取 UI 可选的来源列表。"""
-        return self._text_gateway.get_source_options()
+        return self._runtime_config.get_text_source_options()
 
     def get_default_source_key(self) -> str:
-        return self._text_gateway.get_default_source_key()
+        return self._runtime_config.default_text_source_key
