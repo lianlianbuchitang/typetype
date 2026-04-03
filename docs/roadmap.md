@@ -3,6 +3,8 @@
 > 最后更新：2026-03-21
 >
 > 本文档记录 TypeType 客户端当前完成状态与后续功能规划。
+>
+> 注意：本文是路线图，不保证所有架构术语都与当前源码同步。涉及当前分层、依赖规则与职责边界时，请以 [developer-architecture-handbook.md](./developer-architecture-handbook.md) 为准。
 
 ---
 

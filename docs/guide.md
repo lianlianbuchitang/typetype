@@ -3,6 +3,8 @@
 > 最后更新：2026-03-21
 >
 > 本文档详细说明如何将 TypeType 打字练习工具转化为 AI Agent 面试项目。
+>
+> 注意：本文是规划文档，不是当前客户端架构的事实来源。若其中出现 `TypingUseCase`、`TextGateway` 等旧术语，请以 [developer-architecture-handbook.md](./developer-architecture-handbook.md) 和当前源码为准。
 
 ---
 
