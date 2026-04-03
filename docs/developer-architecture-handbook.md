@@ -184,16 +184,26 @@ src/backend/
 │   ├── gateways/
 │   │   ├── score_gateway.py          # DTO 转换 + 剪贴板
 │   │   └── text_source_gateway.py   # 文本来源路由
-│   ├── ports/                      # 抽象依赖协议
-│   │   ├── text_provider.py
-│   │   ├── local_text_loader.py
-│   │   └── clipboard.py
 │   └── usecases/
 │       └── load_text_usecase.py    # 文本加载编排
+├── ports/                       # 抽象依赖协议（独立层）
+│   ├── text_provider.py
+│   ├── local_text_loader.py
+│   ├── clipboard.py
+│   ├── char_stats_repository.py
+│   ├── async_executor.py
+│   ├── auth_provider.py
+│   └── ranking_repository.py
+├── models/                      # 数据模型（独立层）
+│   ├── entity/                   # 领域实体
+│   │   ├── char_stat.py
+│   │   └── session_stat.py
+│   └── dto/                     # 数据传输对象
+│       ├── auth_dto.py
+│       └── score_dto.py
 ├── config/
 │   └── runtime_config.py           # 运行时配置
 ├── domain/
-│   ├── models/entity/              # 领域实体
 │   └── services/                  # 纯业务服务
 │       ├── typing_service.py
 │       ├── auth_service.py
@@ -201,7 +211,12 @@ src/backend/
 ├── integration/                   # Port 的具体实现
 │   ├── remote_text_provider.py
 │   ├── qt_local_text_loader.py
-│   └── api_client_auth_provider.py
+│   ├── api_client_auth_provider.py
+│   ├── noop_char_stats_repository.py
+│   ├── qt_async_executor.py
+│   ├── sqlite_char_stats_repository.py
+│   ├── global_key_listener.py
+│   └── system_identifier.py
 ├── infrastructure/                # 基础设施
 │   └── api_client.py
 ├── presentation/
@@ -211,8 +226,13 @@ src/backend/
 │       ├── typing_adapter.py
 │       ├── auth_adapter.py
 │       └── char_stats_adapter.py
+├── security/                     # 安全相关
+│   └── secure_storage.py
+├── utils/                       # 工具类
+│   └── logger.py
 └── workers/                     # 后台任务
-    └── text_load_worker.py
+    ├── text_load_worker.py
+    └── session_stat_worker.py
 ```
 
 ---

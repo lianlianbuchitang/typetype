@@ -7,8 +7,8 @@ from src.backend.application.usecases.load_text_usecase import (
     LoadTextUseCase,
     TextLoadPlan,
 )
-from src.backend.application.ports.local_text_loader import LocalTextLoader
-from src.backend.application.ports.text_provider import TextProvider
+from src.backend.ports.local_text_loader import LocalTextLoader
+from src.backend.ports.text_provider import TextProvider
 from src.backend.config.runtime_config import RuntimeConfig
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 

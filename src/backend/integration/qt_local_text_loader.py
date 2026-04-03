@@ -3,7 +3,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QFile, QIODevice
 
-from ..application.ports.local_text_loader import LocalTextLoader
+from ..ports.local_text_loader import LocalTextLoader
 
 
 class QtLocalTextLoader(LocalTextLoader):

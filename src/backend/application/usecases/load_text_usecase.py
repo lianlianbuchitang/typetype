@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from ..gateways.text_source_gateway import TextSourceGateway
-from ..ports.clipboard import ClipboardReader
+from ...ports.clipboard import ClipboardReader
 
 
 @dataclass(frozen=True)

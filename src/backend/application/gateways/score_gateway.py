@@ -5,7 +5,7 @@
 
 from ...models.dto.score_dto import HistoryRecordDTO, ScoreSummaryDTO
 from ...models.entity.session_stat import SessionStat
-from ..ports.clipboard import ClipboardWriter
+from ...ports.clipboard import ClipboardWriter
 
 
 class ScoreGateway:

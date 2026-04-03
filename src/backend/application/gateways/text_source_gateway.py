@@ -14,8 +14,8 @@ from typing import Literal
 from typing import TYPE_CHECKING
 
 from ...config.runtime_config import RuntimeConfig
-from ..ports.local_text_loader import LocalTextLoader
-from ..ports.text_provider import TextProvider
+from ...ports.local_text_loader import LocalTextLoader
+from ...ports.text_provider import TextProvider
 
 if TYPE_CHECKING:
     pass

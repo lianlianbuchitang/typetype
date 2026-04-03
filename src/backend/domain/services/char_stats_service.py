@@ -1,5 +1,5 @@
-from ...application.ports.async_executor import AsyncExecutor
-from ...application.ports.char_stats_repository import CharStatsRepository
+from ...ports.async_executor import AsyncExecutor
+from ...ports.char_stats_repository import CharStatsRepository
 from ...models.entity.char_stat import CharStat
 
 

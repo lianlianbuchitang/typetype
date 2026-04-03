@@ -1,6 +1,6 @@
 import keyring
 
-from ...application.ports.auth_provider import AuthProvider
+from ...ports.auth_provider import AuthProvider
 from ...security.secure_storage import SecureStorage
 from ...utils.logger import log_warning
 

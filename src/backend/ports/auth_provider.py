@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from ...models.dto.auth_dto import AuthResult
+from ..models.dto.auth_dto import AuthResult
 
 
 class AuthProvider(Protocol):

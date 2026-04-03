@@ -1,4 +1,4 @@
-from ..application.ports.ranking_repository import RankingRepository
+from ..ports.ranking_repository import RankingRepository
 from ..infrastructure.network_errors import SubmitScoreError
 from ..models.entity.session_stat import SessionStat
 from .base_worker import BaseWorker

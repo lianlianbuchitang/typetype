@@ -42,10 +42,10 @@ QML UI → Presentation (Bridge + Adapters)
 
 | 协议 | 方法签名 | 位置 |
 |---|---|---|
-| `TextFetcher` | `fetch_text(url: str) → str \| None` | `application/ports/text_fetcher.py` |
-| `LocalTextLoader` | `load_text(path: str) → str \| None` | `application/ports/local_text_loader.py` |
-| `ClipboardReader` | `text() → str` | `application/ports/clipboard.py` |
-| `ClipboardWriter` | `setText(text: str) → None` | `application/ports/clipboard.py` |
+| `TextFetcher` | `fetch_text(url: str) → str \| None` | `ports/text_provider.py` |
+| `LocalTextLoader` | `load_text(path: str) → str \| None` | `ports/local_text_loader.py` |
+| `ClipboardReader` | `text() → str` | `ports/clipboard.py` |
+| `ClipboardWriter` | `setText(text: str) → None` | `ports/clipboard.py` |
 
 ### 1.4 数据流
 

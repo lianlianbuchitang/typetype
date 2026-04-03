@@ -543,7 +543,7 @@ TypeType 项目转化为 AI Agent 面试项目**高度可行**，主要优势：
 
 **可复用文件**：
 - `src/backend/domain/services/char_stats_service.py`（记忆源）
-- `src/backend/application/ports/char_stats_repository.py`（协议）
+- `src/backend/ports/char_stats_repository.py`（协议）
 - `src/qml/pages/WeakCharsPage.qml`（UI 参考）
 
 ### B. 参考资源
