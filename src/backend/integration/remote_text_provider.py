@@ -1,10 +1,11 @@
 from typing import TYPE_CHECKING, Any, Callable
 
 from config.text_source_config import TextCatalogItem
-from ...infrastructure.network_errors import CatalogServiceError
+
+from ..infrastructure.network_errors import CatalogServiceError
 
 if TYPE_CHECKING:
-    from ...infrastructure.api_client import ApiClient
+    from ..infrastructure.api_client import ApiClient
 
 
 class RemoteTextProvider:
