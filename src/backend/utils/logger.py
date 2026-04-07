@@ -1,65 +1,134 @@
-import os
-import sys
-from pathlib import Path
+"""Logging configuration for Typetype.
 
-_LEVELS = {
-    "debug": 10,
-    "info": 20,
-    "warning": 30,
-    "error": 40,
-    "none": 50,
+Supports:
+- Environment variable TYPETYPE_DEBUG=1 enables debug output
+- Environment variable TYPETYPE_LOG_LEVEL overrides log level
+- Simultaneous output to console and rotating log file
+- Automatic log rotation (10MB per file, keep 5 backups)
+- Backward compatible with existing log_* API
+"""
+
+import logging
+import os
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
+
+# ANSI color codes for console output
+COLORS = {
+    "DEBUG": "\033[36m",  # Cyan
+    "INFO": "\033[32m",  # Green
+    "WARNING": "\033[33m",  # Yellow
+    "ERROR": "\033[31m",  # Red
+    "RESET": "\033[0m",
 }
 
 _LOG_FILE = Path.home() / ".typetype" / "app.log"
-_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+try:
+    _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+except OSError:
+    # Can't create log directory - we'll just skip file logging
+    logging.warning("Could not create log directory %s, file logging disabled", _LOG_FILE.parent)
+    _LOG_FILE = None
+
+_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+_BACKUP_COUNT = 5  # Keep 5 rotated files
 
 
-def _get_log_level() -> str:
+class ColoredFormatter(logging.Formatter):
+    """Console formatter with ANSI color by log level."""
+
+    def format(self, record):
+        levelname = record.levelname
+        if levelname in COLORS:
+            record.levelname = f"{COLORS[levelname]}{levelname}{COLORS['RESET']}"
+        return super().format(record)
+
+
+def _get_log_level() -> int:
+    """Get log level from environment variables."""
     debug_flag = os.getenv("TYPETYPE_DEBUG", "").strip().lower()
     if debug_flag in {"1", "true", "yes", "on"}:
-        return "debug"
-    return os.getenv("TYPETYPE_LOG_LEVEL", "warning").strip().lower()
+        return logging.DEBUG
+
+    level_name = os.getenv("TYPETYPE_LOG_LEVEL", "warning").strip().lower()
+    level_map = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+    }
+    return level_map.get(level_name, logging.WARNING)
 
 
-_LOG_LEVEL = _get_log_level()
+def _setup_logging() -> None:
+    """Setup root logger with console and rotating file handlers."""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(_get_log_level())
+
+    # Remove any existing handlers
+    for handler in list(root_logger.handlers):
+        root_logger.removeHandler(handler)
+
+    # Console handler with colored output
+    console_handler = logging.StreamHandler()
+    console_formatter = ColoredFormatter(
+        "%(asctime)s [%(levelname)s] %(message)s", "%H:%M:%S"
+    )
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+
+    # Rotating file handler (only if log directory is writable)
+    if _LOG_FILE is not None:
+        log_file: Path = _LOG_FILE
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=_MAX_SIZE,
+            backupCount=_BACKUP_COUNT,
+            encoding="utf-8",
+        )
+        file_formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)-8s] %(message)s", "%Y-%m-%d %H:%M:%S"
+        )
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
 
 
-def _should_log(level: str) -> bool:
-    current = _LEVELS.get(_LOG_LEVEL, _LEVELS["warning"])
-    target = _LEVELS.get(level, _LEVELS["warning"])
-    return target >= current
+# Initialize logging on module import
+_setup_logging()
+
+# Get the module-level logger for our functions
+_logger = logging.getLogger(__name__)
 
 
-def _log(level: str, message: str) -> None:
-    if not _should_log(level):
-        return
-    stream = sys.stderr if level in {"warning", "error"} else sys.stdout
-    if stream is None:
-        with open(_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(message + "\n")
-        return
-    print(message, file=stream)
-
-
+# Backward compatible API - preserve all existing function signatures
 def log_debug(message: str) -> None:
-    _log("debug", message)
+    _logger.debug(message)
 
 
 def log_info(message: str) -> None:
-    _log("info", message)
+    _logger.info(message)
 
 
 def log_warning(message: str) -> None:
-    _log("warning", message)
+    _logger.warning(message)
 
 
 def log_error(message: str) -> None:
-    _log("error", message)
+    _logger.error(message)
 
 
 def get_log_level() -> str:
-    return _LOG_LEVEL
+    """Get current log level name for backward compatibility."""
+    level = _logger.getEffectiveLevel()
+    name_map = {
+        logging.DEBUG: "debug",
+        logging.INFO: "info",
+        logging.WARNING: "warning",
+        logging.ERROR: "error",
+    }
+    return name_map.get(level, "warning")
 
 
 def is_debug_enabled() -> bool:
-    return _should_log("debug")
+    """Check if debug logging is enabled."""
+    return _logger.isEnabledFor(logging.DEBUG)
