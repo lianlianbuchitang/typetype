@@ -27,7 +27,9 @@ try:
     _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 except OSError:
     # Can't create log directory - we'll just skip file logging
-    logging.warning("Could not create log directory %s, file logging disabled", _LOG_FILE.parent)
+    logging.warning(
+        "Could not create log directory %s, file logging disabled", _LOG_FILE.parent
+    )
     _LOG_FILE = None
 
 _MAX_SIZE = 10 * 1024 * 1024  # 10 MB
