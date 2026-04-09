@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock
 
-from config.text_source_config import TextSourceEntry
 from src.backend.application.usecases.load_text_usecase import (
     LoadTextResult,
     TextLoadPlan,
 )
 from src.backend.config.runtime_config import RuntimeConfig
+from src.backend.config.text_source_config import TextSourceEntry
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 
 

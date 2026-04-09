@@ -54,7 +54,7 @@ uv run ruff format --check .
 typetype/
 ├── main.py                 # 启动入口 + 依赖注入
 ├── docs/                   # 开发文档
-├── config/                 # JSON 配置与文本来源配置模型
+├── config/                 # JSON 配置文件
 ├── src/qml/                # QML 页面与组件
 ├── src/backend/            # Python 后端分层代码
 ├── resources/              # 字体、图片、内置文本
@@ -123,8 +123,8 @@ TypingPage.qml / ToolLine.qml
   -> appBridge.requestLoadText(sourceKey)
   -> TextAdapter.requestLoadText(sourceKey)
   -> LoadTextUseCase.plan_load(sourceKey)
-  -> LoadTextUseCase.load(sourceKey)
-  -> TextSourceGateway.load_text_by_key(sourceKey)
+  -> LoadTextUseCase.load(plan)
+  -> TextSourceGateway.load_from_plan(sourceEntry)
   -> LocalTextLoader 或 RemoteTextProvider
   -> TextAdapter 发射 textLoaded / textLoadFailed
   -> QML 更新文本框
@@ -188,7 +188,7 @@ TypingPage.qml / ToolLine.qml
 - 有 `local_path` → 本地文件 → `sync`
 - 没有 `local_path` → 远程来源 → `async`
 
-这个判断在 `TextSourceGateway.get_execution_mode()`，不是在 QML，也不是在 `TextAdapter` 里拍脑袋决定。
+这个判断在 `TextLoadPlan.execution_mode`（由 `TextSourceGateway.plan_load()` 得到来源后计算），不是在 QML，也不是在 `TextAdapter` 里拍脑袋决定。
 
 ---
 

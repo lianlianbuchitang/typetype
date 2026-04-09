@@ -94,7 +94,8 @@ src/backend/
 │   └── usecases/
 │       └── load_text_usecase.py
 ├── config/
-│   └── runtime_config.py
+│   ├── runtime_config.py
+│   └── text_source_config.py
 ├── domain/services/
 │   ├── auth_service.py
 │   ├── char_stats_service.py
@@ -183,10 +184,11 @@ ToolLine.qml
   -> Bridge.requestLoadText(sourceKey)
   -> TextAdapter.requestLoadText(sourceKey)
   -> LoadTextUseCase.plan_load(sourceKey)
-  -> TextSourceGateway.get_execution_mode(sourceKey)
+  -> TextSourceGateway.plan_load(sourceKey)
+  -> TextLoadPlan.execution_mode
   -> sync / async
-  -> LoadTextUseCase.load(sourceKey)
-  -> TextSourceGateway.load_text_by_key(sourceKey)
+  -> LoadTextUseCase.load(plan)
+  -> TextSourceGateway.load_from_plan(sourceEntry)
   -> QtLocalTextLoader 或 RemoteTextProvider
   -> TextAdapter 发射 textLoaded / textLoadFailed
   -> TypingPage.applyLoadedText(...)
@@ -319,8 +321,9 @@ Adapter 做业务来源路由
 通常会改：
 
 - `config/config.example.json`
-- `config/text_source_config.py`（如果配置模型要扩展）
+- `src/backend/config/text_source_config.py`（如果配置模型要扩展）
 - `RuntimeConfig`
+- `src/backend/models/dto/text_catalog_item.py`（如果目录 DTO 要扩展）
 - `TextSourceGateway` / `RemoteTextProvider`（如需新路由或协议）
 - 对应测试
 

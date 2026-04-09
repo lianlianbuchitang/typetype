@@ -69,7 +69,7 @@ src/backend/
 │   ├── gateways/      # Port 适配（TextSourceGateway, ScoreGateway）
 │   └── usecases/      # 业务编排：LoadTextUseCase（仅此一个有编排价值的）
 ├── ports/             # 协议定义（独立顶层）：TextProvider, LocalTextLoader 等
-├── config/            # RuntimeConfig
+├── config/            # 运行时 JSON 配置文件
 ├── domain/
 │   └── services/      # 纯业务逻辑（TypingService, AuthService, CharStatsService）
 ├── infrastructure/    # ApiClient 与网络异常模型
@@ -144,7 +144,7 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 | **Domain Services** | TypingService | 打字统计纯逻辑（SessionStat 状态、键数累积） |
 | | AuthService | 登录认证（login/logout、token 验证与刷新） |
 | | CharStatsService | 字符维度统计（缓存、持久化、薄弱字查询） |
-| **Application** | LoadTextUseCase | 文本加载路由 + 业务验证（异常上浮到 BaseWorker） |
+| **Application** | LoadTextUseCase | 文本加载编排 + 业务验证（异常上浮到 BaseWorker） |
 | | GlobalExceptionHandler | 网络异常 → 用户友好消息集中映射 |
 | **Gateways** | TextSourceGateway | Port 适配 + 配置查询 |
 | | ScoreGateway | DTO 转换 + 剪贴板操作 |

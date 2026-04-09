@@ -3,7 +3,8 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from config.text_source_config import TextSourceConfig, TextSourceEntry
+from ..models.dto.text_catalog_item import TextCatalogItem
+from .text_source_config import TextSourceConfig, TextSourceEntry
 
 
 @dataclass
@@ -18,6 +19,7 @@ class RuntimeConfig:
     refresh_api_url: str = ""
 
     text_source_config: TextSourceConfig = field(default_factory=TextSourceConfig)
+    catalog_items: list[TextCatalogItem] = field(default_factory=list)
 
     @classmethod
     def load_from_file(cls, config_path: str | None = None) -> "RuntimeConfig":
@@ -97,7 +99,14 @@ class RuntimeConfig:
         return self.text_source_config.get_source(k)
 
     def get_text_source_options(self) -> list[dict[str, str]]:
-        return self.text_source_config.get_source_options()
+        options = self.text_source_config.get_source_options()
+        options.extend(
+            {"key": item.text_id, "label": item.label} for item in self.catalog_items
+        )
+        return options
 
     def get_ranking_sources(self) -> list[TextSourceEntry]:
         return self.text_source_config.get_ranking_sources()
+
+    def update_catalog(self, items: list[TextCatalogItem]) -> None:
+        self.catalog_items = items

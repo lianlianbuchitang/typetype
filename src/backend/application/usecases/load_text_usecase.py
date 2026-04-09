@@ -1,18 +1,15 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from ..gateways.text_source_gateway import TextSourceGateway
+from ...config.text_source_config import TextSourceEntry
 from ...ports.clipboard import ClipboardReader
-
-if TYPE_CHECKING:
-    from config.text_source_config import TextSourceEntry
 
 
 @dataclass(frozen=True)
 class TextLoadPlan:
     """文本加载计划，持有已查找好的来源条目，避免重复查询。"""
 
-    source_entry: "TextSourceEntry"
+    source_entry: TextSourceEntry
 
     @property
     def execution_mode(self) -> str:

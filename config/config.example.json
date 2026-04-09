@@ -1,5 +1,4 @@
 {
-  "$schema": "./config.schema.json",
   "base_url": "http://127.0.0.1:8080",
   "default_text_source_key": "builtin_demo",
   "api_timeout": 20.0,

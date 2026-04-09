@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 from dataclasses import dataclass
 
-from config.text_source_config import TextSourceEntry
 from src.backend.application.gateways.text_source_gateway import TextSourceGateway
 from src.backend.application.usecases.load_text_usecase import (
     LoadTextResult,
@@ -11,6 +10,7 @@ from src.backend.application.usecases.load_text_usecase import (
 from src.backend.ports.local_text_loader import LocalTextLoader
 from src.backend.ports.text_provider import TextProvider
 from src.backend.config.runtime_config import RuntimeConfig
+from src.backend.config.text_source_config import TextSourceEntry
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 
 
@@ -83,8 +83,6 @@ def test_text_source_gateway_exposes_execution_mode_from_runtime_config():
 
 
 def test_text_adapter_uses_usecase_plan_and_skips_runtime_strategy_lookup():
-    from config.text_source_config import TextSourceEntry
-
     runtime_config = MagicMock(spec=RuntimeConfig)
     runtime_config.get_text_source_options.return_value = []
     runtime_config.default_text_source_key = "builtin_demo"
@@ -120,8 +118,6 @@ def test_text_adapter_uses_usecase_plan_and_skips_runtime_strategy_lookup():
 
 
 def test_text_adapter_enqueues_async_worker_from_application_plan():
-    from config.text_source_config import TextSourceEntry
-
     runtime_config = MagicMock(spec=RuntimeConfig)
     runtime_config.get_text_source_options.return_value = []
     runtime_config.default_text_source_key = "builtin_demo"

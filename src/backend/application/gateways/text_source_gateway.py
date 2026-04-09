@@ -17,7 +17,7 @@ from ...ports.local_text_loader import LocalTextLoader
 from ...ports.text_provider import TextProvider
 
 if TYPE_CHECKING:
-    from config.text_source_config import TextSourceEntry
+    from ...config.text_source_config import TextSourceEntry
 
 
 class TextSourceGateway:

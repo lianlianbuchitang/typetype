@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from config.text_source_config import TextCatalogItem
+from ..models.dto.text_catalog_item import TextCatalogItem
 
 
 class TextProvider(Protocol):

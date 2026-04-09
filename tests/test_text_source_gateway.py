@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
-from config.text_source_config import TextSourceEntry
 from src.backend.application.gateways.text_source_gateway import TextSourceGateway
+from src.backend.config.text_source_config import TextSourceEntry
 from src.backend.ports.local_text_loader import LocalTextLoader
 from src.backend.ports.text_provider import TextProvider
 from src.backend.config.runtime_config import RuntimeConfig

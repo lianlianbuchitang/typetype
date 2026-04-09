@@ -47,14 +47,10 @@ class TestBridgeSpecialPlatform:
         runtime_config.get_text_source_options.return_value = []
         runtime_config.default_text_source_key = "builtin_demo"
 
-        # Don't use spec=TextSourceGateway because the interface changed
-        # The new interface has plan_load + load_from_plan instead of repeated lookups
         text_gateway = MagicMock()
-        text_gateway.load_text_by_key.return_value = (True, "test text", "")
-        text_gateway.get_execution_mode.return_value = "sync"
-        text_gateway.plan_load.return_value = (
-            "sync",
-            DummySource(key="test", local_path="test.txt"),
+        text_gateway.plan_load.return_value = DummySource(
+            key="test",
+            local_path="test.txt",
         )
         text_gateway.load_from_plan.return_value = (True, "test text", "")
 

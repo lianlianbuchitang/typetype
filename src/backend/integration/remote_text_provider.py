@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING, Any, Callable
 
-from config.text_source_config import TextCatalogItem
-
 from ..infrastructure.network_errors import CatalogServiceError
+from ..models.dto.text_catalog_item import TextCatalogItem
 
 if TYPE_CHECKING:
     from ..infrastructure.api_client import ApiClient
