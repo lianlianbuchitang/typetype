@@ -30,7 +30,12 @@ from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.auth_adapter import AuthAdapter
 from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
 from src.backend.security.secure_storage import SecureStorage
-from src.backend.utils.logger import is_debug_enabled, log_debug, log_info
+from src.backend.utils.logger import (
+    install_qt_message_handler,
+    is_debug_enabled,
+    log_debug,
+    log_info,
+)
 
 
 def _check_darkdetect_support() -> bool:
@@ -63,6 +68,7 @@ def _load_common_chars() -> list[str]:
 
 
 def main():
+    install_qt_message_handler()
     app = QGuiApplication(sys.argv)
 
     # 注册 UI 字体并设为应用默认字体。

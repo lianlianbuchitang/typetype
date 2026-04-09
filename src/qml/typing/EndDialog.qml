@@ -26,7 +26,5 @@ Dialog {
 
     onAccepted: {
         copyScoreMessage();
-        console.log("Ok clicked");
     }
-    onRejected: console.log("Cancel clicked")
 }

@@ -2,7 +2,8 @@ import base64
 import json
 
 from Crypto.Cipher import AES
-from src.backend.utils.logger import log_debug
+
+from ..utils.logger import log_debug
 
 # 密钥和初始向量 (Latin1 编码)
 KEY = b"c9ec834c80f77237"

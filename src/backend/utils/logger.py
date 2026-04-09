@@ -10,8 +10,11 @@ Supports:
 
 import logging
 import os
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Any
+
+from PySide6.QtCore import QtMsgType, qInstallMessageHandler
 
 # ANSI color codes for console output
 COLORS = {
@@ -22,18 +25,9 @@ COLORS = {
     "RESET": "\033[0m",
 }
 
-_LOG_FILE = Path.home() / ".typetype" / "app.log"
-try:
-    _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-except OSError:
-    # Can't create log directory - we'll just skip file logging
-    logging.warning(
-        "Could not create log directory %s, file logging disabled", _LOG_FILE.parent
-    )
-    _LOG_FILE = None
-
 _MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 _BACKUP_COUNT = 5  # Keep 5 rotated files
+_qt_message_handler_installed = False
 
 
 class ColoredFormatter(logging.Formatter):
@@ -80,18 +74,55 @@ def _setup_logging() -> None:
     root_logger.addHandler(console_handler)
 
     # Rotating file handler (only if log directory is writable)
-    if _LOG_FILE is not None:
+    log_file = Path.home() / ".typetype" / "app.log"
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         file_handler = RotatingFileHandler(
-            _LOG_FILE,
+            log_file,
             maxBytes=_MAX_SIZE,
             backupCount=_BACKUP_COUNT,
             encoding="utf-8",
         )
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)-8s] %(message)s", "%Y-%m-%d %H:%M:%S"
-        )
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
+    except OSError as exc:
+        root_logger.warning("File logging disabled: %s", exc)
+        return
+
+    file_formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)-8s] %(message)s", "%Y-%m-%d %H:%M:%S"
+    )
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
+
+
+def _qt_log_level(msg_type: QtMsgType) -> int:
+    if msg_type == QtMsgType.QtDebugMsg:
+        return logging.DEBUG
+    if msg_type == QtMsgType.QtInfoMsg:
+        return logging.INFO
+    if msg_type == QtMsgType.QtWarningMsg:
+        return logging.WARNING
+    return logging.ERROR
+
+
+def _format_qt_message(context: Any, message: str) -> str:
+    category = getattr(context, "category", "") or "default"
+    return f"[Qt:{category}] {message}"
+
+
+def _qt_message_handler(msg_type: QtMsgType, context: Any, message: str) -> None:
+    _logger.log(_qt_log_level(msg_type), _format_qt_message(context, message))
+
+
+def install_qt_message_handler() -> bool:
+    """Install a Qt message handler so QML/Qt logs are routed through Python logging."""
+    global _qt_message_handler_installed
+
+    if _qt_message_handler_installed:
+        return False
+
+    qInstallMessageHandler(_qt_message_handler)
+    _qt_message_handler_installed = True
+    return True
 
 
 # Initialize logging on module import

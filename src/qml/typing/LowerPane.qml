@@ -102,11 +102,11 @@ Pane {
                     //==============================================
                     if (preeditText === '' && currentText === '') {
                         if (qmlDebug)
-                            console.log("Set false because no text");
+                            console.debug("typing.lowerPane.startStatus=false reason=empty_input");
                         appBridge.handleStartStatus(false);
                     } else if (!appBridge.isStart() && !appBridge.isReadOnly()) {
                         if (qmlDebug)
-                            console.log("Set true status by LowePane's textChanged event.");
+                            console.debug("typing.lowerPane.startStatus=true source=textChanged");
                         appBridge.handleStartStatus(true);
                         if (root.isSpecialPlatform) {
                             appBridge.handlePressed(); // 第一下按键别忘了统计, 后续按键由全局监听器统计

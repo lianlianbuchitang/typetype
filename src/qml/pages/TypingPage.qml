@@ -84,8 +84,6 @@ Item {
         }
 
         function onTypingEnded() {
-            if (qmlDebug)
-                console.log("Typing ended");
             endDialog.scoreMessage = appBridge.getScoreMessage();
             endDialog.open();
         }
