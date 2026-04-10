@@ -88,8 +88,15 @@ Item {
             endDialog.open();
         }
 
-        function onTextLoaded(text) {
+        function onTextLoaded(text, textId) {
             applyLoadedText(text);
+            // 设置文本ID用于成绩提交
+            if (appBridge && textId !== undefined) {
+                if (textId <= 0) {
+                    textId = 0;
+                }
+                appBridge.setTextId(textId);
+            }
         }
 
         function onTextLoadFailed(message) {
