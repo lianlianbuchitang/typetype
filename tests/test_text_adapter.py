@@ -35,18 +35,22 @@ def test_request_load_text_sync_uses_usecase_plan_only():
     load_text_usecase.plan_load.return_value = TextLoadPlan(
         source_entry=source_entry,
     )
-    load_text_usecase.load.return_value = LoadTextResult(success=True, text="sync text")
-    loaded_texts: list[str] = []
+    load_text_usecase.load.return_value = LoadTextResult(
+        success=True, text="sync text", text_id=123
+    )
+    loaded_texts: list[tuple[str, int]] = []
     loading_states: list[bool] = []
 
-    adapter.textLoaded.connect(loaded_texts.append)
+    adapter.textLoaded.connect(
+        lambda text, text_id: loaded_texts.append((text, text_id))
+    )
     adapter.textLoadingChanged.connect(
         lambda: loading_states.append(adapter.text_loading)
     )
 
     adapter.requestLoadText("local")
 
-    assert loaded_texts == ["sync text"]
+    assert loaded_texts == [("sync text", 123)]
     assert loading_states == [True, False]
     assert adapter.text_loading is False
     load_text_usecase.plan_load.assert_called_once_with("local")
@@ -65,10 +69,12 @@ def test_request_load_text_async_enqueues_worker_from_usecase_plan():
     )
     thread_pool = DummyThreadPool()
     adapter._thread_pool = thread_pool
-    loaded_texts: list[str] = []
+    loaded_texts: list[tuple[str, int]] = []
     loading_states: list[bool] = []
 
-    adapter.textLoaded.connect(loaded_texts.append)
+    adapter.textLoaded.connect(
+        lambda text, text_id: loaded_texts.append((text, text_id))
+    )
     adapter.textLoadingChanged.connect(
         lambda: loading_states.append(adapter.text_loading)
     )
@@ -77,10 +83,12 @@ def test_request_load_text_async_enqueues_worker_from_usecase_plan():
 
     assert len(thread_pool.started_workers) == 1
     worker = thread_pool.started_workers[0]
-    worker.signals.succeeded.emit("async text")
+    # Worker now emits LoadTextResult, not just string
+    result = LoadTextResult(success=True, text="async text", text_id=456)
+    worker.signals.succeeded.emit(result)
     worker.signals.finished.emit()
 
-    assert loaded_texts == ["async text"]
+    assert loaded_texts == [("async text", 456)]
     assert loading_states == [True, False]
     assert adapter.text_loading is False
     load_text_usecase.plan_load.assert_called_once_with("remote")

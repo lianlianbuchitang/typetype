@@ -60,9 +60,13 @@ def test_load_from_plan_uses_local_loader_for_local_source():
     local_text_loader.load_text.return_value = "local text"
     source = TextSourceEntry(key="local", label="Local", local_path="/tmp/text.txt")
 
-    result = gateway.load_from_plan(source)
+    success, fetched, error = gateway.load_from_plan(source)
 
-    assert result == (True, "local text", "")
+    assert success is True
+    assert fetched is not None
+    assert fetched.content == "local text"
+    assert fetched.text_id is None
+    assert error == ""
     # No repeated lookup for source entry since it's already in the plan
     runtime_config.get_text_source.assert_not_called()
     local_text_loader.load_text.assert_called_once_with("/tmp/text.txt")
@@ -70,15 +74,23 @@ def test_load_from_plan_uses_local_loader_for_local_source():
 
 
 def test_load_from_plan_uses_text_provider_for_remote_source():
+    from src.backend.models.dto.fetched_text import FetchedText
+
     gateway, runtime_config, text_provider, local_text_loader = _build_gateway(
         TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
     )
-    text_provider.fetch_text_by_key.return_value = "remote text"
+    text_provider.fetch_text_by_key.return_value = FetchedText(
+        content="remote text", text_id=789
+    )
     source = TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
 
-    result = gateway.load_from_plan(source)
+    success, fetched, error = gateway.load_from_plan(source)
 
-    assert result == (True, "remote text", "")
+    assert success is True
+    assert fetched is not None
+    assert fetched.content == "remote text"
+    assert fetched.text_id == 789
+    assert error == ""
     # No repeated lookup for source entry since it's already in the plan
     runtime_config.get_text_source.assert_not_called()
     text_provider.fetch_text_by_key.assert_called_once_with("remote")

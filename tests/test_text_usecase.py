@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from src.backend.application.usecases.load_text_usecase import LoadTextUseCase
+from src.backend.models.dto.fetched_text import FetchedText
 
 
 @dataclass
@@ -12,12 +13,14 @@ class DummyTextSourceGateway:
     def __init__(self):
         self._success = True
         self._text = ""
+        self._text_id = None
         self._error_message = ""
         self._execution_mode = "sync"
 
-    def set_success_result(self, text: str):
+    def set_success_result(self, text: str, text_id: int | None = None):
         self._success = True
         self._text = text
+        self._text_id = text_id
 
     def set_failure_result(self, error_message: str):
         self._success = False
@@ -34,7 +37,7 @@ class DummyTextSourceGateway:
 
     def load_from_plan(self, source):
         if self._success:
-            return (True, self._text, "")
+            return (True, FetchedText(content=self._text, text_id=self._text_id), "")
         return (False, None, self._error_message)
 
 
@@ -49,7 +52,7 @@ class DummyClipboardReader:
 def test_load_success():
     """测试成功加载文本。"""
     gateway = DummyTextSourceGateway()
-    gateway.set_success_result("test text")
+    gateway.set_success_result("test text", text_id=123)
 
     usecase = LoadTextUseCase(
         text_gateway=gateway,
@@ -60,6 +63,7 @@ def test_load_success():
     result = usecase.load(plan)
     assert result.success
     assert result.text == "test text"
+    assert result.text_id == 123
 
 
 def test_plan_load_returns_gateway_execution_mode():

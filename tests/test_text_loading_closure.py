@@ -91,22 +91,26 @@ def test_text_adapter_uses_usecase_plan_and_skips_runtime_strategy_lookup():
     load_text_usecase.plan_load.return_value = TextLoadPlan(
         source_entry=source_entry,
     )
-    load_text_usecase.load.return_value = LoadTextResult(success=True, text="sync text")
+    load_text_usecase.load.return_value = LoadTextResult(
+        success=True, text="sync text", text_id=123
+    )
 
     adapter = TextAdapter(
         runtime_config=runtime_config,
         load_text_usecase=load_text_usecase,
     )
-    loaded_texts: list[str] = []
+    loaded_texts: list[tuple[str, int]] = []
     loading_states: list[bool] = []
-    adapter.textLoaded.connect(loaded_texts.append)
+    adapter.textLoaded.connect(
+        lambda text, text_id: loaded_texts.append((text, text_id))
+    )
     adapter.textLoadingChanged.connect(
         lambda: loading_states.append(adapter.text_loading)
     )
 
     adapter.requestLoadText("local")
 
-    assert loaded_texts == ["sync text"]
+    assert loaded_texts == [("sync text", 123)]
     assert loading_states == [True, False]
     assert adapter.text_loading is False
     load_text_usecase.plan_load.assert_called_once_with("local")
@@ -132,17 +136,21 @@ def test_text_adapter_enqueues_async_worker_from_application_plan():
         load_text_usecase=load_text_usecase,
     )
     adapter._thread_pool = DummyThreadPool()
-    loaded_texts: list[str] = []
-    adapter.textLoaded.connect(loaded_texts.append)
+    loaded_texts: list[tuple[str, int]] = []
+    adapter.textLoaded.connect(
+        lambda text, text_id: loaded_texts.append((text, text_id))
+    )
 
     adapter.requestLoadText("remote")
 
     assert len(adapter._thread_pool.started_workers) == 1
     worker = adapter._thread_pool.started_workers[0]
-    worker.signals.succeeded.emit("async text")
+    # Worker now emits LoadTextResult, not just string
+    result = LoadTextResult(success=True, text="async text", text_id=456)
+    worker.signals.succeeded.emit(result)
     worker.signals.finished.emit()
 
-    assert loaded_texts == ["async text"]
+    assert loaded_texts == [("async text", 456)]
     load_text_usecase.plan_load.assert_called_once_with("remote")
     load_text_usecase.load.assert_not_called()  # worker will call it
     runtime_config.get_text_source.assert_not_called()
