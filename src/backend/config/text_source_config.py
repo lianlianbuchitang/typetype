@@ -7,7 +7,6 @@ class TextSourceEntry:
     label: str
     has_ranking: bool = False
     local_path: str | None = None
-    text_id: str = ""
 
 
 @dataclass

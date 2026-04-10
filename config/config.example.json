@@ -14,19 +14,16 @@
     "fst_500": {
       "label": "前五百",
       "local_path": "resources/texts/前五百.txt",
-      "text_id": "builtin_fst_500",
       "has_ranking": true
     },
     "mid_500": {
       "label": "中五百",
       "local_path": "resources/texts/中五百.txt",
-      "text_id": "builtin_mid_500",
       "has_ranking": true
     },
     "lst_500": {
       "label": "后五百",
       "local_path": "resources/texts/后五百.txt",
-      "text_id": "builtin_lst_500",
       "has_ranking": true
     },
     "essential_single_char": {

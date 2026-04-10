@@ -65,7 +65,6 @@ class RuntimeConfig:
                 key=key,
                 label=source_data.get("label", key),
                 local_path=source_data.get("local_path"),
-                text_id=source_data.get("text_id", ""),
                 has_ranking=source_data.get("has_ranking", False),
             )
             if not default_key:
