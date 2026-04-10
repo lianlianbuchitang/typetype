@@ -6,6 +6,7 @@
 - Qt 计时器管理
 - 文本着色（QTextCursor）
 - 信号发射
+- 成绩提交（通过 ScoreSubmitter）
 
 不负责：
 - 打字统计逻辑（由 TypingService 负责）
@@ -13,12 +14,17 @@
 - 字符统计累积（由 TypingService 负责）
 """
 
+from typing import TYPE_CHECKING
+
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtQuick import QQuickTextDocument
 
 from ...application.gateways.score_gateway import ScoreGateway
 from ...domain.services.typing_service import TypingService
+
+if TYPE_CHECKING:
+    from ...ports.score_submitter import ScoreSubmitter
 
 
 class TypingAdapter(QObject):
@@ -38,11 +44,13 @@ class TypingAdapter(QObject):
         self,
         typing_service: TypingService,
         score_gateway: ScoreGateway,
+        score_submitter: "ScoreSubmitter | None" = None,
         time_interval: float = 0.15,
     ):
         super().__init__()
         self._typing_service = typing_service
         self._score_gateway = score_gateway
+        self._score_submitter = score_submitter
         self.timeInterval = time_interval
 
         # Qt 相关
@@ -95,11 +103,26 @@ class TypingAdapter(QObject):
             if changed:
                 self.readOnlyChanged.emit()
             self._typing_service.flush_char_stats()
+
+            # 提交成绩到服务器
+            self._submit_score()
+
             self.typingEnded.emit()
             record = self._typing_service.get_history_record()
             self.historyRecordUpdated.emit(record)
             return True
         return False
+
+    def _submit_score(self) -> None:
+        """提交成绩到服务器。"""
+        if self._score_submitter is None:
+            return
+
+        score_data = self._typing_service.score_data
+        text_id = self._typing_service.text_id
+
+        if text_id is not None and text_id > 0:
+            self._score_submitter.submit(score_data, text_id)
 
     # 对外公开的 Slot 方法
 
@@ -149,6 +172,10 @@ class TypingAdapter(QObject):
         changed = self._typing_service.set_read_only(False)
         if changed:
             self.readOnlyChanged.emit()
+
+    def setTextId(self, text_id: int | None) -> None:
+        """设置当前文本ID（由 QML 调用或 Bridge 调用）。"""
+        self._typing_service.set_text_id(text_id)
 
     def handleStartStatus(self, status: bool) -> None:
         if self._typing_service.state.is_started != status:

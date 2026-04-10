@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..integration.global_key_listener import GlobalKeyListener
     from .adapters.auth_adapter import AuthAdapter
     from .adapters.char_stats_adapter import CharStatsAdapter
+    from .adapters.leaderboard_adapter import LeaderboardAdapter
     from .adapters.text_adapter import TextAdapter
     from .adapters.typing_adapter import TypingAdapter
 
@@ -36,7 +37,7 @@ class Bridge(QObject):
     readOnlyChanged = Signal()
     historyRecordUpdated = Signal(dict)
     typingEnded = Signal()
-    textLoaded = Signal(str)
+    textLoaded = Signal(str, int)  # (text_content, text_id), text_id=-1 表示无ID
     textLoadFailed = Signal(str)
     textLoadingChanged = Signal()
     loggedinChanged = Signal()
@@ -45,6 +46,9 @@ class Bridge(QObject):
     cursorPosChanged = Signal(int)
     specialPlatformConfirmed = Signal(bool)
     weakestCharsLoaded = Signal(list)
+    leaderboardLoaded = Signal(dict)
+    leaderboardLoadFailed = Signal(str)
+    leaderboardLoadingChanged = Signal()
 
     def __init__(
         self,
@@ -52,6 +56,7 @@ class Bridge(QObject):
         text_adapter: TextAdapter,
         auth_adapter: AuthAdapter,
         char_stats_adapter: CharStatsAdapter,
+        leaderboard_adapter: LeaderboardAdapter | None = None,
         key_listener: GlobalKeyListener | None = None,
     ):
         super().__init__()
@@ -59,6 +64,7 @@ class Bridge(QObject):
         self._text_adapter = text_adapter
         self._auth_adapter = auth_adapter
         self._char_stats_adapter = char_stats_adapter
+        self._leaderboard_adapter = leaderboard_adapter
         self._key_listener = key_listener
         self._is_special_platform = key_listener is not None
         self._lower_pane_focused = False
@@ -67,6 +73,7 @@ class Bridge(QObject):
         self._connect_text_load_signals()
         self._connect_auth_signals()
         self._connect_char_stats_signals()
+        self._connect_leaderboard_signals()
         self._connect_key_listener()
 
         self.specialPlatformConfirmed.emit(self._is_special_platform)
@@ -98,6 +105,18 @@ class Bridge(QObject):
         self._char_stats_adapter.weakestCharsLoaded.connect(
             self.weakestCharsLoaded.emit
         )
+
+    def _connect_leaderboard_signals(self) -> None:
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.leaderboardLoaded.connect(
+                self.leaderboardLoaded.emit
+            )
+            self._leaderboard_adapter.leaderboardLoadFailed.connect(
+                self.leaderboardLoadFailed.emit
+            )
+            self._leaderboard_adapter.leaderboardLoadingChanged.connect(
+                self.leaderboardLoadingChanged.emit
+            )
 
     def _connect_key_listener(self) -> None:
         if self._key_listener:
@@ -165,6 +184,12 @@ class Bridge(QObject):
     def isSpecialPlatform(self) -> bool:
         return self._is_special_platform
 
+    @Property(bool, notify=leaderboardLoadingChanged)
+    def leaderboardLoading(self) -> bool:
+        if self._leaderboard_adapter:
+            return self._leaderboard_adapter.loading
+        return False
+
     # Slot 入口
 
     @Slot(str)
@@ -186,6 +211,11 @@ class Bridge(QObject):
     @Slot(QQuickTextDocument)
     def handleLoadedText(self, quickDoc: QQuickTextDocument) -> None:
         self._typing_adapter.handleLoadedText(quickDoc)
+
+    @Slot(int)
+    def setTextId(self, text_id: int) -> None:
+        """设置当前文本ID（用于成绩提交）。"""
+        self._typing_adapter.setTextId(text_id)
 
     @Slot(str)
     def requestLoadText(self, source_key: str) -> None:
@@ -238,3 +268,18 @@ class Bridge(QObject):
     @Slot()
     def loadWeakChars(self) -> None:
         self._char_stats_adapter.loadWeakChars()
+
+    @Slot(str)
+    def loadLeaderboard(self, source_key: str) -> None:
+        """加载指定来源的排行榜。"""
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.loadLeaderboard(source_key)
+
+    @Slot(str)
+    def copyToClipboard(self, text: str) -> None:
+        """复制文本到剪贴板。"""
+        from PySide6.QtGui import QGuiApplication
+
+        clipboard = QGuiApplication.clipboard()
+        if clipboard:
+            clipboard.setText(text)

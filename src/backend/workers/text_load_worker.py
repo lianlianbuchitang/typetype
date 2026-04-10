@@ -1,4 +1,8 @@
-from ..application.usecases.load_text_usecase import LoadTextUseCase, TextLoadPlan
+from ..application.usecases.load_text_usecase import (
+    LoadTextResult,
+    LoadTextUseCase,
+    TextLoadPlan,
+)
 from .base_worker import BaseWorker
 
 
@@ -10,9 +14,9 @@ class TextLoadWorker(BaseWorker):
         self._plan = plan
         super().__init__(task=self._load_text, error_prefix="加载文本失败")
 
-    def _load_text(self) -> str:
-        """在后台线程中加载文本。"""
+    def _load_text(self) -> LoadTextResult:
+        """在后台线程中加载文本，返回完整的 LoadTextResult。"""
         result = self._load_text_usecase.load(self._plan)
         if result.success:
-            return result.text
+            return result
         raise Exception(result.error_message)

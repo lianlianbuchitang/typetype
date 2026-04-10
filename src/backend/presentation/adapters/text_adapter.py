@@ -1,7 +1,11 @@
 from PySide6.QtCore import QObject, QThreadPool, Signal, Slot
 
 from ...application.exception_handler import GlobalExceptionHandler
-from ...application.usecases.load_text_usecase import LoadTextUseCase, TextLoadPlan
+from ...application.usecases.load_text_usecase import (
+    LoadTextResult,
+    LoadTextUseCase,
+    TextLoadPlan,
+)
 from ...config.runtime_config import RuntimeConfig
 from ...workers.text_load_worker import TextLoadWorker
 
@@ -20,7 +24,7 @@ class TextAdapter(QObject):
     """
 
     # 信号定义
-    textLoaded = Signal(str)
+    textLoaded = Signal(str, int)  # (text_content, text_id)，text_id 为 -1 表示无 ID
     textLoadFailed = Signal(str)
     textLoadingChanged = Signal()
 
@@ -40,14 +44,19 @@ class TextAdapter(QObject):
             self._text_loading = loading
             self.textLoadingChanged.emit()
 
-    def _on_text_loaded(self, text: object) -> None:
-        if text is None:
-            self.textLoadFailed.emit("加载文本失败：未获取到文本")
-            return
+    def _on_text_loaded(self, result: LoadTextResult) -> None:
+        """处理文本加载成功。
+
+        Args:
+            result: LoadTextResult 对象
+        """
+
+        text = result.text if hasattr(result, "text") else str(result)
+        text_id = result.text_id if hasattr(result, "text_id") else None
         if not isinstance(text, str):
             self.textLoadFailed.emit("加载文本失败：返回数据格式错误")
             return
-        self.textLoaded.emit(text)
+        self.textLoaded.emit(text, text_id if text_id is not None else -1)
 
     def _on_text_load_failed(self, message: str) -> None:
         self.textLoadFailed.emit(message)
@@ -85,7 +94,7 @@ class TextAdapter(QObject):
         try:
             result = self._load_text_usecase.load(plan)
             if result.success:
-                self._on_text_loaded(result.text)
+                self._on_text_loaded(result)
             else:
                 self._on_text_load_failed(f"加载文本失败：{result.error_message}")
         except Exception as e:
@@ -117,7 +126,7 @@ class TextAdapter(QObject):
         try:
             result = self._load_text_usecase.load_from_clipboard()
             if result.success:
-                self._on_text_loaded(result.text)
+                self._on_text_loaded(result)
             else:
                 self._on_text_load_failed(f"加载文本失败：{result.error_message}")
         except Exception as e:
