@@ -14,6 +14,8 @@ from src.backend.presentation.bridge import Bridge
 from src.backend.config.runtime_config import RuntimeConfig
 from src.backend.infrastructure.api_client import ApiClient
 from src.backend.integration.api_client_auth_provider import ApiClientAuthProvider
+from src.backend.integration.api_client_score_submitter import ApiClientScoreSubmitter
+from src.backend.integration.leaderboard_fetcher import LeaderboardFetcher
 from src.backend.domain.services.auth_service import AuthService
 from src.backend.domain.services.char_stats_service import CharStatsService
 from src.backend.domain.services.typing_service import TypingService
@@ -29,6 +31,7 @@ from src.backend.presentation.adapters.text_adapter import TextAdapter
 from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.auth_adapter import AuthAdapter
 from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
+from src.backend.presentation.adapters.leaderboard_adapter import LeaderboardAdapter
 from src.backend.security.secure_storage import SecureStorage
 from src.backend.utils.logger import (
     install_qt_message_handler,
@@ -138,10 +141,19 @@ def main():
     )
     auth_service = AuthService(auth_provider=auth_provider)
 
+    # Score submitter
+    score_submit_url = f"{runtime_config.base_url}/api/v1/scores"
+    score_submitter = ApiClientScoreSubmitter(
+        api_client=api_client,
+        submit_url=score_submit_url,
+        token_provider=_get_jwt_token,
+    )
+
     # Adapters
     typing_adapter = TypingAdapter(
         typing_service=typing_service,
         score_gateway=score_gateway,
+        score_submitter=score_submitter,
     )
     text_adapter = TextAdapter(
         runtime_config=runtime_config,
@@ -149,6 +161,14 @@ def main():
     )
     auth_adapter = AuthAdapter(auth_service=auth_service)
     char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
+
+    # Leaderboard
+    leaderboard_fetcher = LeaderboardFetcher(
+        api_client=api_client,
+        base_url=runtime_config.base_url,
+        token_provider=_get_jwt_token,
+    )
+    leaderboard_adapter = LeaderboardAdapter(leaderboard_fetcher=leaderboard_fetcher)
 
     # Platform detection
     system_identifier = SystemIdentifier()
@@ -167,6 +187,7 @@ def main():
         text_adapter=text_adapter,
         auth_adapter=auth_adapter,
         char_stats_adapter=char_stats_adapter,
+        leaderboard_adapter=leaderboard_adapter,
         key_listener=key_listener,
     )
 
