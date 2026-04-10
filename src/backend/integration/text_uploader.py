@@ -3,7 +3,7 @@
 from collections.abc import Callable
 
 from ..infrastructure.api_client import ApiClient
-from ..utils.logger import log_info, log_warning
+from ..utils.logger import log_warning
 
 
 class TextUploader:
@@ -35,7 +35,7 @@ class TextUploader:
             log_warning("[TextUploader] 无法上传：未登录")
             return None
 
-        log_info(
+        log_warning(
             f"[TextUploader] 开始上传文本：client_text_id={client_text_id}, title={title}, length={len(content)}"
         )
         payload = {"clientTextId": client_text_id, "content": content, "title": title}
@@ -56,7 +56,7 @@ class TextUploader:
         result = data.get("data")
         if result and isinstance(result, dict):
             real_id = result.get("id")
-            log_info(f"[TextUploader] 上传成功：real_text_id={real_id}")
+            log_warning(f"[TextUploader] 上传成功：real_text_id={real_id}")
             return real_id
         log_warning("[TextUploader] 上传失败：响应数据格式错误")
         return None

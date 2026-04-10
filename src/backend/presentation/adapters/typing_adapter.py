@@ -22,7 +22,7 @@ from PySide6.QtQuick import QQuickTextDocument
 
 from ...application.gateways.score_gateway import ScoreGateway
 from ...domain.services.typing_service import TypingService
-from ...utils.logger import log_info
+from ...utils.logger import log_info, log_warning
 
 if TYPE_CHECKING:
     from ...ports.score_submitter import ScoreSubmitter
@@ -149,7 +149,7 @@ class TypingAdapter(QObject):
         if real_text_id:
             # 注意：不更新 text_id，客户端始终保持 hash 值
             # 服务器已存储 client_text_id，下次提交可按此查找
-            log_info(
+            log_warning(
                 f"[TypingAdapter] 上传成功: real_text_id={real_text_id}, 重新提交成绩"
             )
             self._submit_score()
