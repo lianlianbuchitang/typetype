@@ -3,6 +3,7 @@
 定义成绩提交的抽象接口，供集成层实现。
 """
 
+from collections.abc import Callable
 from typing import Protocol
 
 from ..models.entity.session_stat import SessionStat
@@ -16,12 +17,22 @@ class ScoreSubmitter(Protocol):
     - NoopScoreSubmitter: 空实现，用于未登录或禁用提交场景
     """
 
-    def submit(self, score_data: SessionStat, text_id: int | None = None) -> bool:
+    def submit(
+        self,
+        score_data: SessionStat,
+        text_id: int | None = None,
+        text_content: str = "",
+        text_title: str = "",
+        on_text_not_found: Callable[[int, str, str], None] | None = None,
+    ) -> bool:
         """提交成绩到服务器。
 
         Args:
             score_data: 会话统计数据
             text_id: 文本ID（来自服务器），可选
+            text_content: 文本内容（用于上传），可选
+            text_title: 文本标题（用于上传），可选
+            on_text_not_found: 文本不存在时的回调(text_id, content, title)，可选
 
         Returns:
             bool: 提交是否成功

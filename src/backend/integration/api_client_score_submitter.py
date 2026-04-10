@@ -5,7 +5,7 @@ from typing import Any
 
 from ..infrastructure.api_client import ApiClient
 from ..models.entity.session_stat import SessionStat
-from ..utils.logger import log_warning
+from ..utils.logger import log_warning, log_info
 
 
 class ApiClientScoreSubmitter:
@@ -21,12 +21,22 @@ class ApiClientScoreSubmitter:
         self._submit_url = submit_url
         self._token_provider = token_provider
 
-    def submit(self, score_data: SessionStat, text_id: int | None = None) -> bool:
+    def submit(
+        self,
+        score_data: SessionStat,
+        text_id: int | None = None,
+        text_content: str = "",
+        text_title: str = "",
+        on_text_not_found: Callable[[int, str, str], None] | None = None,
+    ) -> bool:
         """提交成绩到服务器。
 
         Args:
             score_data: 会话统计数据
             text_id: 文本ID（来自服务器）
+            text_content: 文本内容（用于上传）
+            text_title: 文本标题（用于上传）
+            on_text_not_found: 文本不存在时的回调
 
         Returns:
             bool: 提交是否成功
@@ -50,7 +60,9 @@ class ApiClientScoreSubmitter:
             headers=headers,
         )
 
-        return self._parse_response(data)
+        return self._parse_response(
+            data, text_id, text_content, text_title, on_text_not_found
+        )
 
     def _build_payload(self, score_data: SessionStat, text_id: int) -> dict[str, Any]:
         """构建请求体。"""
@@ -66,7 +78,14 @@ class ApiClientScoreSubmitter:
             "duration": round(score_data.time, 2),
         }
 
-    def _parse_response(self, data: dict[str, Any] | None) -> bool:
+    def _parse_response(
+        self,
+        data: dict[str, Any] | None,
+        text_id: int,
+        text_content: str,
+        text_title: str,
+        on_text_not_found: Callable[[int, str, str], None] | None,
+    ) -> bool:
         """解析响应。"""
         if data is None:
             log_warning(
@@ -78,6 +97,12 @@ class ApiClientScoreSubmitter:
         if code == 200:
             return True
 
+        if code == 10003 and on_text_not_found:
+            log_info(
+                f"[ScoreSubmitter] 检测到 NOT_FOUND 调用 callback: text_id={text_id}"
+            )
+            on_text_not_found(text_id, text_content, text_title)
+
         log_warning(f"[ScoreSubmitter] 提交失败: {data.get('message', '未知错误')}")
         return False
 
@@ -85,5 +110,12 @@ class ApiClientScoreSubmitter:
 class NoopScoreSubmitter:
     """空实现，用于未登录或禁用提交场景。"""
 
-    def submit(self, score_data: SessionStat, text_id: int | None = None) -> bool:
+    def submit(
+        self,
+        score_data: SessionStat,
+        text_id: int | None = None,
+        text_content: str = "",
+        text_title: str = "",
+        on_text_not_found: Callable[[int, str, str], None] | None = None,
+    ) -> bool:
         return False
