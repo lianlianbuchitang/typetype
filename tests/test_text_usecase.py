@@ -6,6 +6,7 @@ from src.backend.models.dto.fetched_text import FetchedText
 @dataclass
 class DummyTextSourceEntry:
     key: str
+    label: str = ""
     local_path: str | None = None
 
 

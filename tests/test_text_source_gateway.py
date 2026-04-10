@@ -33,9 +33,7 @@ def test_plan_load_returns_sync_for_local_source():
 
 
 def test_plan_load_returns_async_for_remote_source():
-    gateway, _, _, _ = _build_gateway(
-        TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
-    )
+    gateway, _, _, _ = _build_gateway(TextSourceEntry(key="remote", label="Remote"))
 
     source = gateway.plan_load("remote")
     assert source.key == "remote"
@@ -65,7 +63,7 @@ def test_load_from_plan_uses_local_loader_for_local_source():
     assert success is True
     assert fetched is not None
     assert fetched.content == "local text"
-    assert fetched.text_id is None
+    assert fetched.text_id != 0  # label + content 联合 hash
     assert error == ""
     # No repeated lookup for source entry since it's already in the plan
     runtime_config.get_text_source.assert_not_called()
@@ -77,12 +75,12 @@ def test_load_from_plan_uses_text_provider_for_remote_source():
     from src.backend.models.dto.fetched_text import FetchedText
 
     gateway, runtime_config, text_provider, local_text_loader = _build_gateway(
-        TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
+        TextSourceEntry(key="remote", label="Remote")
     )
     text_provider.fetch_text_by_key.return_value = FetchedText(
         content="remote text", text_id=789
     )
-    source = TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
+    source = TextSourceEntry(key="remote", label="Remote")
 
     success, fetched, error = gateway.load_from_plan(source)
 

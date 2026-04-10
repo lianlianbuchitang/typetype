@@ -4,7 +4,6 @@ from src.backend.application.usecases.load_text_usecase import (
     LoadTextResult,
     TextLoadPlan,
 )
-from src.backend.config.runtime_config import RuntimeConfig
 from src.backend.config.text_source_config import TextSourceEntry
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 
@@ -18,13 +17,15 @@ class DummyThreadPool:
 
 
 def _build_adapter() -> tuple[TextAdapter, MagicMock, MagicMock]:
-    runtime_config = MagicMock(spec=RuntimeConfig)
-    runtime_config.get_text_source_options.return_value = []
-    runtime_config.default_text_source_key = "builtin_demo"
+    runtime_config = MagicMock()
+    runtime_config.text_source_config.get_source_options.return_value = []
+    runtime_config.text_source_config.default_key = "builtin_demo"
     load_text_usecase = MagicMock()
+    local_text_loader = MagicMock()
     adapter = TextAdapter(
         runtime_config=runtime_config,
         load_text_usecase=load_text_usecase,
+        local_text_loader=local_text_loader,
     )
     return adapter, runtime_config, load_text_usecase
 

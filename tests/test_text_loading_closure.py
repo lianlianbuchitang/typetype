@@ -66,7 +66,7 @@ def test_text_source_gateway_exposes_execution_mode_from_runtime_config():
     local_entry = TextSourceEntry(
         key="local", label="Local", local_path="/tmp/text.txt"
     )
-    remote_entry = TextSourceEntry(key="remote", label="Remote", text_id="remote-id")
+    remote_entry = TextSourceEntry(key="remote", label="Remote")
     runtime_config = MagicMock(spec=RuntimeConfig)
     runtime_config.get_text_source.side_effect = [local_entry, remote_entry]
     gateway = TextSourceGateway(
@@ -95,9 +95,11 @@ def test_text_adapter_uses_usecase_plan_and_skips_runtime_strategy_lookup():
         success=True, text="sync text", text_id=123
     )
 
+    local_text_loader = MagicMock(spec=LocalTextLoader)
     adapter = TextAdapter(
         runtime_config=runtime_config,
         load_text_usecase=load_text_usecase,
+        local_text_loader=local_text_loader,
     )
     loaded_texts: list[tuple[str, int]] = []
     loading_states: list[bool] = []
@@ -131,9 +133,11 @@ def test_text_adapter_enqueues_async_worker_from_application_plan():
         source_entry=source_entry,
     )
 
+    local_text_loader = MagicMock(spec=LocalTextLoader)
     adapter = TextAdapter(
         runtime_config=runtime_config,
         load_text_usecase=load_text_usecase,
+        local_text_loader=local_text_loader,
     )
     adapter._thread_pool = DummyThreadPool()
     loaded_texts: list[tuple[str, int]] = []

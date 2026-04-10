@@ -20,7 +20,6 @@ def test_runtime_config_from_dict_builds_sources_and_default_key():
                 },
                 "remote": {
                     "label": "远程示例",
-                    "text_id": "remote-id",
                     "has_ranking": True,
                 },
             },
@@ -38,7 +37,6 @@ def test_runtime_config_from_dict_builds_sources_and_default_key():
 
     remote_source = runtime_config.get_text_source("remote")
     assert remote_source is not None
-    assert remote_source.text_id == "remote-id"
     assert remote_source.has_ranking is True
 
 
