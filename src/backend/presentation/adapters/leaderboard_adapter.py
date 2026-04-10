@@ -57,7 +57,7 @@ class LeaderboardAdapter(QObject):
 
         self._set_loading(True)
         worker = LeaderboardWorker(
-            leaderboard_fetcher=self._leaderboard_fetcher,
+            leaderboard_gateway=self._leaderboard_gateway,
             source_key=source_key,
         )
         worker.signals.succeeded.connect(self._on_leaderboard_loaded)
