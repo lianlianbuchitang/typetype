@@ -1,0 +1,30 @@
+"""文本上传器协议。
+
+定义文本上传的抽象接口，供集成层实现。
+"""
+
+from typing import Protocol
+
+
+class TextUploader(Protocol):
+    """文本上传器协议。
+
+    用于将客户端文本无感上传到服务器。
+
+    实现类：
+    - integration.text_uploader.TextUploader: 真实实现
+    - integration.text_uploader.NoopTextUploader: 空实现
+    """
+
+    def upload(self, text_id: int, content: str, title: str) -> int | None:
+        """上传文本到服务器。
+
+        Args:
+            text_id: 客户端计算的文本ID
+            content: 文本内容
+            title: 文本标题
+
+        Returns:
+            int | None: 服务器分配的真实文本ID，失败返回 None
+        """
+        ...
