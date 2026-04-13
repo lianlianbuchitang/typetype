@@ -34,6 +34,7 @@ from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.auth_adapter import AuthAdapter
 from src.backend.presentation.adapters.char_stats_adapter import CharStatsAdapter
 from src.backend.presentation.adapters.leaderboard_adapter import LeaderboardAdapter
+from src.backend.presentation.adapters.upload_text_adapter import UploadTextAdapter
 from src.backend.security.secure_storage import SecureStorage
 from src.backend.utils.logger import (
     install_qt_message_handler,
@@ -153,7 +154,7 @@ def main():
 
     # Text uploader
     text_upload_url = f"{runtime_config.base_url}/api/v1/texts/upload"
-    text_uploader = TextUploader(  # noqa: F841 - kept for server-side auto-fetch scenarios
+    text_uploader = TextUploader(
         api_client=api_client,
         upload_url=text_upload_url,
         token_provider=_get_jwt_token,
@@ -182,6 +183,11 @@ def main():
     leaderboard_gateway = LeaderboardGateway(leaderboard_fetcher=leaderboard_fetcher)
     leaderboard_adapter = LeaderboardAdapter(leaderboard_gateway=leaderboard_gateway)
 
+    # Upload text adapter
+    upload_text_adapter = UploadTextAdapter(
+        text_uploader=text_uploader,
+    )
+
     # Platform detection
     system_identifier = SystemIdentifier()
     os_type, display_server = system_identifier.get_system_info()
@@ -199,6 +205,7 @@ def main():
         text_adapter=text_adapter,
         auth_adapter=auth_adapter,
         char_stats_adapter=char_stats_adapter,
+        upload_text_adapter=upload_text_adapter,
         leaderboard_adapter=leaderboard_adapter,
         key_listener=key_listener,
     )

@@ -51,6 +51,12 @@ FluentWindow {
             ]
         },
         {
+            title: qsTr("上传文本"),
+            page: Qt.resolvedUrl("pages/UploadTextPage.qml"),
+            icon: "ic_fluent_document_add_20_regular",
+            position: Position.Top
+        },
+        {
             title: qsTr("个人中心"),
             page: Qt.resolvedUrl("pages/ProfilePage.qml"),
             icon: "ic_fluent_person_20_regular",

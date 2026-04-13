@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from .adapters.leaderboard_adapter import LeaderboardAdapter
     from .adapters.text_adapter import TextAdapter
     from .adapters.typing_adapter import TypingAdapter
+    from .adapters.upload_text_adapter import UploadTextAdapter
 
 
 class Bridge(QObject):
@@ -49,6 +50,7 @@ class Bridge(QObject):
     leaderboardLoaded = Signal(dict)
     leaderboardLoadFailed = Signal(str)
     leaderboardLoadingChanged = Signal()
+    uploadResult = Signal(bool, str)
 
     def __init__(
         self,
@@ -56,6 +58,7 @@ class Bridge(QObject):
         text_adapter: TextAdapter,
         auth_adapter: AuthAdapter,
         char_stats_adapter: CharStatsAdapter,
+        upload_text_adapter: UploadTextAdapter | None = None,
         leaderboard_adapter: LeaderboardAdapter | None = None,
         key_listener: GlobalKeyListener | None = None,
     ):
@@ -64,6 +67,7 @@ class Bridge(QObject):
         self._text_adapter = text_adapter
         self._auth_adapter = auth_adapter
         self._char_stats_adapter = char_stats_adapter
+        self._upload_text_adapter = upload_text_adapter
         self._leaderboard_adapter = leaderboard_adapter
         self._key_listener = key_listener
         self._is_special_platform = key_listener is not None
@@ -73,6 +77,7 @@ class Bridge(QObject):
         self._connect_text_load_signals()
         self._connect_auth_signals()
         self._connect_char_stats_signals()
+        self._connect_upload_signals()
         self._connect_leaderboard_signals()
         self._connect_key_listener()
 
@@ -105,6 +110,10 @@ class Bridge(QObject):
         self._char_stats_adapter.weakestCharsLoaded.connect(
             self.weakestCharsLoaded.emit
         )
+
+    def _connect_upload_signals(self) -> None:
+        if self._upload_text_adapter:
+            self._upload_text_adapter.uploadFinished.connect(self.uploadResult.emit)
 
     def _connect_leaderboard_signals(self) -> None:
         if self._leaderboard_adapter:
@@ -233,6 +242,19 @@ class Bridge(QObject):
     @Slot()
     def loadTextFromClipboard(self) -> None:
         self._text_adapter.loadTextFromClipboard()
+
+    @Slot(str, str, str, bool)
+    def uploadText(
+        self, title: str, content: str, sourceKey: str, isCloud: bool
+    ) -> None:
+        """上传文本，根据 isCloud 选择本地保存或云端上传。"""
+        if not self._upload_text_adapter:
+            self.uploadResult.emit(False, "上传功能未初始化")
+            return
+        if isCloud:
+            self._upload_text_adapter.upload_to_cloud(title, content, sourceKey)
+        else:
+            self._upload_text_adapter.upload_to_local(title, content, sourceKey)
 
     @Slot(bool)
     def handleStartStatus(self, status: bool) -> None:
