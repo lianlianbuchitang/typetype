@@ -83,3 +83,31 @@ class RemoteTextProvider:
             return None
         except Exception:
             return None
+
+    def fetch_text_by_client_id(self, client_text_id: int) -> FetchedText | None:
+        """通过 clientTextId 从服务器查找文本。
+
+        Returns:
+            FetchedText: 包含 id 的文本对象（内容不重要，只需要 id）
+            None: 未找到时返回
+        """
+        try:
+            url = f"{self._base_url}/api/v1/texts/by-client-text-id/{client_text_id}"
+            response = self._api_client.request(
+                "GET", url, headers=self._get_auth_headers()
+            )
+            if response is None:
+                return None
+            if isinstance(response, dict):
+                data = response.get("data")
+                if isinstance(data, dict):
+                    text_id = data.get("id")
+                    if text_id is not None:
+                        return FetchedText(
+                            content=data.get("content", ""),
+                            text_id=int(text_id),
+                            title=data.get("title", ""),
+                        )
+            return None
+        except Exception:
+            return None

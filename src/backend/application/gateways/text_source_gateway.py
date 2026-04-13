@@ -16,6 +16,7 @@ from ...models.dto.fetched_text import FetchedText
 from ...config.runtime_config import RuntimeConfig
 from ...ports.local_text_loader import LocalTextLoader
 from ...ports.text_provider import TextProvider
+from ...utils.text_id import text_id_from_content
 
 if TYPE_CHECKING:
     from ...config.text_source_config import TextSourceEntry
@@ -55,22 +56,40 @@ class TextSourceGateway:
             tuple[bool, FetchedText | None, str]: (成功, 文本对象, 错误信息)
         """
         if source.local_path:
-            return self._load_from_local(source.local_path, source.label)
+            return self._load_from_local(source.local_path, source.label, source.key)
 
         # 网络来源
         return self._load_from_network(source.key)
 
     def _load_from_local(
-        self, path: str | None, label: str = ""
+        self, path: str | None, label: str = "", source_key: str = ""
     ) -> tuple[bool, FetchedText | None, str]:
-        """从本地文件加载文本。"""
+        """从本地文件加载文本，并尝试回查服务端获取 text_id。"""
         if not path:
             return False, None, "本地来源缺少路径"
         text = self._local_text_loader.load_text(path)
         if text is None:
             return False, None, "无法读取本地文件"
-        # 本地文本不参与排行榜，text_id 为 None
-        return True, FetchedText(content=text, text_id=None), ""
+
+        # 尝试回查服务端获取 text_id
+        text_id = self._lookup_server_text_id(source_key, text)
+        return True, FetchedText(content=text, text_id=text_id), ""
+
+    def _lookup_server_text_id(self, source_key: str, content: str) -> int | None:
+        """通过 clientTextId 回查服务端文本 ID。
+
+        本地内容与服务端一致时返回服务端 ID，不一致（用户修改过）时返回 None。
+        """
+        if not source_key:
+            return None
+        try:
+            client_text_id = text_id_from_content(source_key, content)
+            fetched = self._text_provider.fetch_text_by_client_id(client_text_id)
+            if fetched and fetched.text_id is not None:
+                return fetched.text_id
+        except Exception:
+            pass
+        return None
 
     def _load_from_network(
         self, source_key: str
