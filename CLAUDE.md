@@ -27,7 +27,7 @@ uv run ruff format --check .
 ## 当前文本加载链路
 
 1. QML `ToolLine` 触发 `requestLoadText(sourceId)`
-2. `Bridge.requestLoadText()` 根据 `RuntimeConfig` 判断来源类型
+2. `Bridge.requestLoadText()` 转发到 `TextAdapter.requestLoadText()`
 3. 网络来源走 `TextLoadWorker -> LoadTextUseCase.load(source_id)`
 4. 本地来源走 `LoadTextUseCase.load(source_id)`
 5. 结果通过 `textLoaded` / `textLoadFailed` 信号回传 QML
@@ -49,22 +49,19 @@ uv run ruff format --check .
 - 若 QML 中需要同时使用 RinUI 和 Qt 同名组件（如 `TextArea`、`ScrollBar`），使用 `import RinUI as Rin` 避免冲突。
 - Nuitka 打包时需通过 `--include-package=RinUI` + `--include-data-dir` 显式包含 RinUI 的 Python 模块和 QML/资源文件。
 
-## Spring Boot 接入说明（计划）
+## Spring Boot 后端（已接入）
 
-当前尚未正式接入。后续推荐按以下方式实施。
+后端已在 typetype-server 项目中实现。当前使用的接口：
 
-### 接口草案
+- `GET /api/v1/texts/latest/{sourceKey}` — 获取指定来源的最新文本
+- `GET /api/v1/texts/catalog` — 获取所有可用文本来源
+- `POST /api/v1/scores` — 提交成绩（只发 textId，不发 sourceKey/content）
+- `GET /api/v1/texts/{textId}/leaderboard` — 获取文本排行榜
 
-- `GET /api/v1/texts/random?sourceKey=xxx`
-- `GET /api/v1/text-sources`
-- `POST /api/v1/scores`
+### 成绩提交规则
 
-### Python 端改造清单
-
-1. 新增 `SpringBootTextService`，实现 `TextFetcher`。
-2. 在 `RuntimeConfig.text_sources` 注册 springboot 来源。
-3. 在 `main.py` 注入 springboot service（保留旧 service 作为回退）。
-4. 为 `LoadTextUseCase`、`ApiClient` 增加对应测试。
+只有服务端存在的文本才能提交成绩。成绩提交只传 textId（服务端主键），服务端直接 findById。
+本地文件和剪贴板仅用于练习，不提交成绩。文本入库通过管理员 API 或服务端自动抓取。
 
 ### 错误与超时
 

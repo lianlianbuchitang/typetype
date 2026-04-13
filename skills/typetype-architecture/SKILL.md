@@ -118,6 +118,26 @@ QML → Bridge → TextAdapter → LoadTextUseCase.plan_load() → outputs sync/
 | Add pure business rule | Domain Service |
 | Add data persistence | Domain Service + Port + Integration |
 
+## Score Submission Architecture
+
+**Rule: Only server-managed texts can have scores.**
+
+- Score submission sends only `textId` (server PK) — no `sourceKey`, no `content`, no hash
+- Server `ScoreService.findById(textId)` → record score. No findOrCreate.
+- Local files and clipboard = practice only, no scores, no server interaction
+- Texts enter the server via: admin API upload OR auto-fetch (e.g., SaiWen)
+
+**Data flow:**
+```
+Leaderboard mode:  GET /texts/latest/{sourceKey} → Text(id=49) → type → POST /scores {textId: 49}
+Practice mode:     local file → type → done (no server call)
+```
+
+**Why not auto-create texts on score submission:**
+- Local files differ between users → would pollute DB with duplicate/inconsistent texts
+- findOrCreate requires content hashing → client/server hash algorithm must stay in sync
+- Simpler to enforce: text must exist before score can reference it
+
 ## Non-Negotiable Principles
 
 1. **Clear dependency direction** always

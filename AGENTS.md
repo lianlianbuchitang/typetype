@@ -185,16 +185,18 @@ local_text_loader = QtLocalTextLoader()
 async_executor = QtAsyncExecutor()
 
 # Gateways
-text_gateway = TextGateway(
+text_source_gateway = TextSourceGateway(
     runtime_config=runtime_config,
-    text_fetchers={"sai_wen": sai_wen_text_fetcher},
-    clipboard=clipboard,
+    text_provider=sai_wen_text_fetcher,
     local_text_loader=local_text_loader,
 )
 score_gateway = ScoreGateway(clipboard=clipboard)
 
 # UseCases
-load_text_usecase = LoadTextUseCase(gateway=text_gateway)
+load_text_usecase = LoadTextUseCase(
+    text_gateway=text_source_gateway,
+    clipboard_reader=clipboard,
+)
 
 # Domain Services
 char_stats_service = CharStatsService(repo=char_stats_repo, async_executor=async_executor)
@@ -209,7 +211,11 @@ auth_provider = ApiClientAuthProvider(
 auth_service = AuthService(auth_provider=auth_provider)
 
 # Adapters
-typing_adapter = TypingAdapter(typing_service=typing_service, score_gateway=score_gateway)
+typing_adapter = TypingAdapter(
+    typing_service=typing_service,
+    score_gateway=score_gateway,
+    score_submitter=score_submitter,
+)
 text_adapter = TextAdapter(text_gateway=text_gateway, load_text_usecase=load_text_usecase)
 auth_adapter = AuthAdapter(auth_service=auth_service)
 char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
@@ -350,3 +356,46 @@ else:
 
     self._state.session_stat.char_count += grow_length  # 最后更新
 ```
+
+### ⚠️ StackView 页面切换时必须重置 appBridge 瞬态状态
+
+**问题**：StackView 每次导航都会 `createObject` 创建新的 TypingPage 实例，但 `appBridge` 是 Python 单例，页面切换后其内部状态（如 `textId`）仍保留上一次的值。
+
+**场景**：
+1. 用户载文（极速杯 textId=49）→ 打到一半
+2. 切到排行榜页面 → 再切回打字页面
+3. 新 TypingPage 实例创建，文本区为空，ComboBox 显示默认来源
+4. 但 `appBridge.textId` 仍然是 49
+5. 用户直接开始打字 → 完成后提交成绩 → 成绩关联到旧的 textId=49，但打的是新内容
+
+**修复**：在 `StackView.onActivating` 中重置所有瞬态状态：
+```qml
+StackView.onActivating: {
+    if (appBridge) {
+        appBridge.setTextTitle(appBridge.defaultTextTitle);
+        appBridge.setTextId(0);  // 重置 textId，强制用户重新载文
+    }
+}
+```
+
+**原则**：`StackView.onActivating` 应该重置所有与"当前载文"相关的状态，确保用户每次回到页面都是一致的初始状态。如果某个状态是从外部单例读取的，必须显式重置。
+
+**历史记录**：此问题在 2026-04-13 的架构重构（source_key / 成绩提交简化）中发现并修复。
+
+### ⚠️ 领域模型不应承载 UI 路由概念
+
+**问题**：`SessionStat`（领域模型）曾包含 `text_source_key` 字段，用来记录"这次打字来自哪个文本来源"。这个概念是 UI 路由层（ComboBox 选择来源）和数据管理层（服务端 TextSource 分组）的职责，不属于打字会话的业务属性。
+
+**后果**：
+- 成绩提交时携带了不必要的 `sourceKey` 参数
+- 服务端需要 `findOrCreate` 逻辑来处理"文本不存在就创建"的复杂场景
+- 概念混淆：source_key 被当成了成绩的核心属性
+
+**正确做法**：
+- 领域模型（SessionStat）只包含打字本身的属性：time, key_stroke_count, char_count, wrong_char_count
+- 来源标识（source_key）是 UI 路由和数据管理的概念，不应进入领域层
+- 成绩提交只需关联已存在的文本 ID（服务端主键），不需要来源信息
+
+**原则**：领域模型 = 纯业务概念。UI 路由、数据分组等概念属于 Application/Presentation 层，不应污染领域模型。
+
+**历史记录**：2026-04-13 架构重构中删除了 `SessionStat.text_source_key`，成绩提交简化为只传 `textId`。

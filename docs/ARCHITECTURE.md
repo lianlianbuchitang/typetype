@@ -51,9 +51,9 @@ TypeType 是一个 **PySide6 + QML 桌面打字练习应用**：
 - 当前文本来源实现：`RemoteTextProvider` + `QtLocalTextLoader`
 - 当前字符统计持久化：`SqliteCharStatsRepository`
 - 当前 Python/QML 通信门面：`presentation/bridge.py`
-- 当前成绩提交实现：`ApiClientScoreSubmitter`
-- 当前文本上传实现：`TextUploader`
-- text_id 生成：`utils/text_id.py`（基于 label + content hash）
+- 当前成绩提交实现：`ApiClientScoreSubmitter`（只发 textId，无回调/重试）
+- 文本入库方式：管理员 API 上传 或 服务端自动抓取（如 SaiWen）
+- 只有服务端存在的文本才能提交成绩，本地文件/剪贴板仅用于练习
 
 ---
 
@@ -299,32 +299,6 @@ main.py
 
 ---
 
-### 文本上传链路（无感上传）
-
-当用户打字完成提交成绩时，若服务器返回"文本不存在"错误，客户端会自动上传文本：
-
-```text
-TypingAdapter._submit_score()
-  -> ScoreSubmitter.submit(...)
-  -> 服务器返回 NOT_FOUND (code=10003)
-  -> TypingAdapter._on_text_not_found()
-  -> TextUploader.upload(text_id, content, title)
-  -> 服务器返回真实 text_id
-  -> 重新提交成绩
-```
-
-**text_id 生成规则：**
-
-本地文本的 `text_id` 由 `utils/text_id.py` 基于 `label + content` 联合 hash 生成：
-
-```python
-text_id = int(sha256(f"{label}:{content}").hexdigest()[:8], 16) % (10**9)
-```
-
-这样设计的原因：
-- 防止用户修改本地文件后仍使用相同 text_id
-- 同一 label + 内容始终生成相同 ID，避免重复上传
-
 ---
 
 ## 依赖规则
@@ -449,4 +423,5 @@ Domain 可以依赖 **抽象协议（Port）**，不能依赖 **具体 Qt / HTTP
 | 2026-04-11 | 新增 TextUploader Port、text_id 生成逻辑、无感上传链路；移除配置中 text_id 字段 |
 | 2026-04-06 | 基于当前源码重写：补充对象装配、QML 页面结构、真实数据流与边界判断 |
 | 2026-04-03 | 重写文本加载闭口后的边界规则 |
+| 2026-04-13 | 架构重构：只有服务端文本才能提交成绩；客户端移除 hash 计算；删除无感上传回调链路；source_key 不再进入成绩提交链路 |
 | 2026-03-21 | 首次创建 |
