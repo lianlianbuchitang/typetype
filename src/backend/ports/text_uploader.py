@@ -9,20 +9,17 @@ from typing import Protocol
 class TextUploader(Protocol):
     """文本上传器协议。
 
-    用于将客户端文本无感上传到服务器。
+    用于将客户端文本无感上传到服务器。clientTextId 由服务端自动计算。
 
     实现类：
     - integration.text_uploader.TextUploader: 真实实现
     - integration.text_uploader.NoopTextUploader: 空实现
     """
 
-    def upload(
-        self, client_text_id: int, content: str, title: str, source_key: str
-    ) -> int | None:
+    def upload(self, content: str, title: str, source_key: str) -> int | None:
         """上传文本到服务器。
 
         Args:
-            client_text_id: 客户端计算的文本ID（hash）
             content: 文本内容
             title: 文本标题
             source_key: 文本来源key

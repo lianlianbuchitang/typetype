@@ -19,13 +19,12 @@ class TextUploader:
         self._upload_url = upload_url
         self._token_provider = token_provider
 
-    def upload(
-        self, client_text_id: int, content: str, title: str, source_key: str
-    ) -> int | None:
+    def upload(self, content: str, title: str, source_key: str) -> int | None:
         """上传文本到服务器。
 
+        clientTextId 由服务端自动计算，客户端只需传内容和来源。
+
         Args:
-            client_text_id: 客户端计算的文本ID（hash）
             content: 文本内容
             title: 文本标题
             source_key: 文本来源key
@@ -39,10 +38,9 @@ class TextUploader:
             return None
 
         log_warning(
-            f"[TextUploader] 开始上传文本：client_text_id={client_text_id}, title={title}, source_key={source_key}, length={len(content)}"
+            f"[TextUploader] 开始上传文本：title={title}, source_key={source_key}, length={len(content)}"
         )
         payload = {
-            "clientTextId": client_text_id,
             "content": content,
             "title": title,
             "sourceKey": source_key,
@@ -73,7 +71,5 @@ class TextUploader:
 class NoopTextUploader:
     """空实现，用于禁用上传场景。"""
 
-    def upload(
-        self, client_text_id: int, content: str, title: str, source_key: str
-    ) -> int | None:
+    def upload(self, content: str, title: str, source_key: str) -> int | None:
         return None
