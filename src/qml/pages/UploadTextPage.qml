@@ -7,7 +7,8 @@ FluentPage {
     id: uploadPage
     title: qsTr("上传文本")
 
-    property bool isCloud: false
+    property bool toLocal: true
+    property bool toCloud: false
 
     ListModel {
         id: sourceListModel
@@ -27,8 +28,10 @@ FluentPage {
         titleField.text = "";
         contentArea.text = "";
         sourceComboBox.currentIndex = 0;
-        localRadio.checked = true;
-        cloudRadio.checked = false;
+        localCheckBox.checked = true;
+        cloudCheckBox.checked = false;
+        toLocal = true;
+        toCloud = false;
         errorText.visible = false;
         errorText.text = "";
     }
@@ -38,7 +41,6 @@ FluentPage {
     }
 
     ColumnLayout {
-        anchors.fill: parent
         spacing: 16
 
         Text {
@@ -101,23 +103,21 @@ FluentPage {
         ColumnLayout {
             spacing: 4
 
-            RadioButton {
-                id: localRadio
+            CheckBox {
+                id: localCheckBox
                 text: qsTr("本地文本库")
                 checked: true
-                onClicked: {
-                    uploadPage.isCloud = false;
-                    cloudRadio.checked = false;
+                onCheckedChanged: {
+                    uploadPage.toLocal = checked;
                 }
             }
 
-            RadioButton {
-                id: cloudRadio
+            CheckBox {
+                id: cloudCheckBox
                 text: qsTr("云端（仅管理员）")
                 enabled: appBridge ? appBridge.loggedin : false
-                onClicked: {
-                    uploadPage.isCloud = true;
-                    localRadio.checked = false;
+                onCheckedChanged: {
+                    uploadPage.toCloud = checked;
                 }
             }
         }
@@ -169,11 +169,16 @@ FluentPage {
                         errorText.visible = true;
                         return;
                     }
+                    if (!uploadPage.toLocal && !uploadPage.toCloud) {
+                        errorText.text = qsTr("请至少选择一个上传目标");
+                        errorText.visible = true;
+                        return;
+                    }
                     errorText.visible = false;
                     uploadBtn.enabled = false;
                     var sourceKey = sourceComboBox.currentValue;
                     if (appBridge)
-                        appBridge.uploadText(title, content, sourceKey, uploadPage.isCloud);
+                        appBridge.uploadText(title, content, sourceKey, uploadPage.toLocal, uploadPage.toCloud);
                 }
             }
         }
@@ -198,9 +203,8 @@ FluentPage {
         }
         function onLoggedinChanged() {
             if (appBridge && !appBridge.loggedin) {
-                uploadPage.isCloud = false;
-                cloudRadio.checked = false;
-                localRadio.checked = true;
+                uploadPage.toCloud = false;
+                cloudCheckBox.checked = false;
             }
         }
     }

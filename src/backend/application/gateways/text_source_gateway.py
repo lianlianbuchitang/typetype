@@ -79,16 +79,19 @@ class TextSourceGateway:
         """通过 clientTextId 回查服务端文本 ID。
 
         本地内容与服务端一致时返回服务端 ID，不一致（用户修改过）时返回 None。
+        服务端对不存在的 sourceKey 会回退到 "custom"，因此需尝试两次。
         """
         if not source_key:
             return None
-        try:
-            client_text_id = text_id_from_content(source_key, content)
-            fetched = self._text_provider.fetch_text_by_client_id(client_text_id)
-            if fetched and fetched.text_id is not None:
-                return fetched.text_id
-        except Exception:
-            pass
+        # 先用实际 sourceKey 查，再用 "custom" 查（服务端对未知来源的回退策略）
+        for key in [source_key, "custom"]:
+            try:
+                client_text_id = text_id_from_content(key, content)
+                fetched = self._text_provider.fetch_text_by_client_id(client_text_id)
+                if fetched and fetched.text_id is not None:
+                    return fetched.text_id
+            except Exception:
+                pass
         return None
 
     def _load_from_network(

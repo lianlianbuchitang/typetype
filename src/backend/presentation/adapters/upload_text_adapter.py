@@ -54,39 +54,61 @@ class UploadTextAdapter(QObject):
         self._texts_dir = os.path.abspath(texts_dir or LOCAL_TEXTS_DIR)
         self._config_path = os.path.abspath(config_path or CONFIG_PATH)
 
+    def upload(
+        self, title: str, content: str, source_key: str, to_local: bool, to_cloud: bool
+    ) -> None:
+        """上传文本到指定目标，支持同时上传本地和云端。"""
+        results: list[str] = []
+        errors: list[str] = []
+
+        if to_local:
+            try:
+                self._do_upload_local(title, content, source_key)
+                results.append("本地")
+            except Exception as e:
+                errors.append(f"本地: {e}")
+
+        if to_cloud:
+            try:
+                self._do_upload_cloud(title, content, source_key)
+                results.append("云端")
+            except Exception as e:
+                errors.append(f"云端: {e}")
+
+        if errors:
+            self.uploadFinished.emit(False, "；".join(errors))
+        else:
+            self.uploadFinished.emit(True, f"已上传到{'/'.join(results)}")
+
+    def _do_upload_local(self, title: str, content: str, source_key: str) -> None:
+        """写文件到本地并更新 config.json 的 text_sources 配置。"""
+        os.makedirs(self._texts_dir, exist_ok=True)
+        safe_title = title.replace("/", "_").replace("\\", "_")
+        filename = f"{source_key}_{safe_title}.txt"
+        file_path = os.path.join(self._texts_dir, filename)
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        self._update_config(source_key, title, filename)
+        log_info(f"[UploadTextAdapter] 本地保存成功: {file_path}")
+
+    def _do_upload_cloud(self, title: str, content: str, source_key: str) -> None:
+        """调用 TextUploader 上传到云端。"""
+        result_id = self._text_uploader.upload(content, title, source_key)
+        if result_id is None:
+            raise RuntimeError("服务器未返回有效ID")
+        log_info(f"[UploadTextAdapter] 云端上传成功: id={result_id}")
+
     @Slot(str, str, str)
     def upload_to_local(self, title: str, content: str, source_key: str) -> None:
-        """写文件到本地并更新 config.json 的 text_sources 配置。"""
-        try:
-            os.makedirs(self._texts_dir, exist_ok=True)
-            safe_title = title.replace("/", "_").replace("\\", "_")
-            filename = f"{source_key}_{safe_title}.txt"
-            file_path = os.path.join(self._texts_dir, filename)
-
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-
-            self._update_config(source_key, title, filename)
-
-            log_info(f"[UploadTextAdapter] 本地保存成功: {file_path}")
-            self.uploadFinished.emit(True, f"文本已保存到本地: {filename}")
-        except Exception as e:
-            log_warning(f"[UploadTextAdapter] 本地保存失败: {e}")
-            self.uploadFinished.emit(False, f"本地保存失败: {e}")
+        """兼容旧接口。"""
+        self.upload(title, content, source_key, True, False)
 
     @Slot(str, str, str)
     def upload_to_cloud(self, title: str, content: str, source_key: str) -> None:
-        """调用 TextUploader 上传到云端。"""
-        try:
-            result_id = self._text_uploader.upload(content, title, source_key)
-            if result_id is not None:
-                log_info(f"[UploadTextAdapter] 云端上传成功: id={result_id}")
-                self.uploadFinished.emit(True, f"文本上传成功，ID: {result_id}")
-            else:
-                self.uploadFinished.emit(False, "上传失败：服务器未返回有效ID")
-        except Exception as e:
-            log_warning(f"[UploadTextAdapter] 云端上传异常: {e}")
-            self.uploadFinished.emit(False, f"上传失败: {e}")
+        """兼容旧接口。"""
+        self.upload(title, content, source_key, False, True)
 
     def _update_config(self, source_key: str, title: str, filename: str) -> None:
         """更新 config.json 的 text_sources 配置。"""

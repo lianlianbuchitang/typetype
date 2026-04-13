@@ -243,18 +243,15 @@ class Bridge(QObject):
     def loadTextFromClipboard(self) -> None:
         self._text_adapter.loadTextFromClipboard()
 
-    @Slot(str, str, str, bool)
+    @Slot(str, str, str, bool, bool)
     def uploadText(
-        self, title: str, content: str, sourceKey: str, isCloud: bool
+        self, title: str, content: str, sourceKey: str, toLocal: bool, toCloud: bool
     ) -> None:
-        """上传文本，根据 isCloud 选择本地保存或云端上传。"""
+        """上传文本，支持同时上传到本地和云端。"""
         if not self._upload_text_adapter:
             self.uploadResult.emit(False, "上传功能未初始化")
             return
-        if isCloud:
-            self._upload_text_adapter.upload_to_cloud(title, content, sourceKey)
-        else:
-            self._upload_text_adapter.upload_to_local(title, content, sourceKey)
+        self._upload_text_adapter.upload(title, content, sourceKey, toLocal, toCloud)
 
     @Slot(bool)
     def handleStartStatus(self, status: bool) -> None:
