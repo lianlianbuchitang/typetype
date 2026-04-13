@@ -138,7 +138,9 @@ Item {
     StackView.onActivating: {
         if (appBridge) {
             appBridge.setTextTitle(appBridge.defaultTextTitle);
-            appBridge.setTextId(0);  // ← 重置 textId，防止页面切换后成绩关联旧文本
+            appBridge.setTextId(0);
+            // 首次加载也走完整管线，确保能拿到服务端 text_id
+            appBridge.requestLoadText(appBridge.defaultTextSourceKey);
         }
     }
 
