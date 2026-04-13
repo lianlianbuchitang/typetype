@@ -156,15 +156,10 @@ class TextAdapter(QObject):
         return self._runtime_config.text_source_config.default_key
 
     def get_default_source_text_id(self) -> int:
-        """获取默认文本来源的 text_id（基于 label + 默认内容 hash）。"""
-        from ...utils.text_id import text_id_from_content
+        """获取默认文本来源的 text_id。
 
-        default_key = self._runtime_config.text_source_config.default_key
-        source = self._runtime_config.text_source_config.get_source(default_key)
-        if source and source.local_path:
-            content = self._local_text_loader.load_text(source.local_path)
-            if content:
-                return text_id_from_content(source.label, content)
+        @deprecated: 客户端不再计算 hash，由服务端 findOrCreate。
+        """
         return 0
 
     def get_default_source_label(self) -> str:

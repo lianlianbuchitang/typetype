@@ -20,14 +20,11 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtQuick import QQuickTextDocument
 
-from ...config.runtime_config import RuntimeConfig
 from ...application.gateways.score_gateway import ScoreGateway
 from ...domain.services.typing_service import TypingService
-from ...utils.logger import log_info, log_warning
 
 if TYPE_CHECKING:
     from ...ports.score_submitter import ScoreSubmitter
-    from ...ports.text_uploader import TextUploader
 
 
 class TypingAdapter(QObject):
@@ -47,17 +44,13 @@ class TypingAdapter(QObject):
         self,
         typing_service: TypingService,
         score_gateway: ScoreGateway,
-        runtime_config: RuntimeConfig,
         score_submitter: "ScoreSubmitter | None" = None,
-        text_uploader: "TextUploader | None" = None,
         time_interval: float = 0.15,
     ):
         super().__init__()
         self._typing_service = typing_service
         self._score_gateway = score_gateway
-        self._runtime_config = runtime_config
         self._score_submitter = score_submitter
-        self._text_uploader = text_uploader
         self.timeInterval = time_interval
 
         # Qt 相关
@@ -121,53 +114,16 @@ class TypingAdapter(QObject):
         return False
 
     def _submit_score(self) -> None:
-        """提交成绩到服务器。"""
+        """提交成绩到服务器（服务端一站式 findOrCreate）。"""
         if self._score_submitter is None:
             return
-
         score_data = self._typing_service.score_data
-        client_text_id = self._typing_service.text_id
-
-        log_info(
-            f"[TypingAdapter] _submit_score: client_text_id={client_text_id}, title={self._typing_service.text_title}"
+        self._score_submitter.submit(
+            score_data,
+            text_content=self._typing_service.plain_doc,
+            source_key=self._typing_service.text_source_key,
+            text_title=self._typing_service.text_title,
         )
-        if client_text_id is not None and client_text_id > 0:
-            self._score_submitter.submit(
-                score_data,
-                client_text_id=client_text_id,
-                text_content=self._typing_service.plain_doc,
-                text_title=self._typing_service.text_title,
-                on_text_not_found=self._on_text_not_found,
-            )
-
-    def _on_text_not_found(self, client_text_id: int, content: str, title: str) -> None:
-        """文本不存在时自动上传。"""
-        source_key = self._typing_service.text_source_key
-        if not self._text_uploader or not content:
-            return
-        # 允许自动上传的情况：
-        # 1. source_key == "custom"（剪贴板自定义文本）
-        # 2. source_key 在配置中存在且有 local_path（配置的本地文件来源）
-        allow_upload = False
-        if source_key == "custom":
-            allow_upload = True
-        else:
-            source_entry = self._runtime_config.get_text_source(source_key)
-            if source_entry and source_entry.local_path:
-                allow_upload = True
-        if not allow_upload:
-            return
-        log_info(
-            f"[TypingAdapter] 检测到文本不存在，正在上传: client_text_id={client_text_id}, title={title}, source_key={source_key}"
-        )
-        real_text_id = self._text_uploader.upload(client_text_id, content, title, source_key)
-        if real_text_id:
-            # 注意：不更新 text_id，客户端始终保持 hash 值
-            # 服务器已存储 client_text_id，下次提交可按此查找
-            log_warning(
-                f"[TypingAdapter] 上传成功: real_text_id={real_text_id}, 重新提交成绩"
-            )
-            self._submit_score()
 
     # 对外公开的 Slot 方法
 
@@ -217,10 +173,6 @@ class TypingAdapter(QObject):
         changed = self._typing_service.set_read_only(False)
         if changed:
             self.readOnlyChanged.emit()
-
-    def setTextId(self, text_id: int | None) -> None:
-        """设置当前文本ID（由 QML 调用或 Bridge 调用）。"""
-        self._typing_service.set_text_id(text_id)
 
     def setTextTitle(self, title: str) -> None:
         """设置当前文本标题（用于上传）。"""

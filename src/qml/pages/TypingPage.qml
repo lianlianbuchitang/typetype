@@ -92,16 +92,10 @@ Item {
 
         function onTextLoaded(text, textId, sourceLabel) {
             applyLoadedText(text);
-            if (appBridge && textId !== undefined) {
-                if (textId <= 0) {
-                    textId = 0;
-                }
-                appBridge.setTextId(textId);
-                if (sourceLabel) {
-                    appBridge.setTextTitle(sourceLabel);
-                }
+            if (appBridge && sourceLabel) {
+                appBridge.setTextTitle(sourceLabel);
             }
-            // 必须设置正确的 source_key，否则上传会出错
+            // 必须设置正确的 source_key，否则成绩提交时服务端无法 findOrCreate
             if (isClipboardLoad) {
                 // 剪贴板载文 → 使用 custom 来源
                 appBridge.setTextSource("custom");
@@ -153,7 +147,6 @@ Item {
 
     StackView.onActivating: {
         if (appBridge) {
-            appBridge.setTextId(appBridge.defaultTextId);
             appBridge.setTextTitle(appBridge.defaultTextTitle);
         }
     }

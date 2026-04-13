@@ -153,7 +153,7 @@ def main():
 
     # Text uploader
     text_upload_url = f"{runtime_config.base_url}/api/v1/texts/upload"
-    text_uploader = TextUploader(
+    text_uploader = TextUploader(  # noqa: F841 - kept for server-side auto-fetch scenarios
         api_client=api_client,
         upload_url=text_upload_url,
         token_provider=_get_jwt_token,
@@ -163,9 +163,7 @@ def main():
     typing_adapter = TypingAdapter(
         typing_service=typing_service,
         score_gateway=score_gateway,
-        runtime_config=runtime_config,
         score_submitter=score_submitter,
-        text_uploader=text_uploader,
     )
     text_adapter = TextAdapter(
         runtime_config=runtime_config,

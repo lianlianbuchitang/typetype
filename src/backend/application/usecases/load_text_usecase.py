@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from ...utils.text_id import text_id_from_content
 from ..gateways.text_source_gateway import TextSourceGateway
 from ...config.text_source_config import TextSourceEntry
 from ...ports.clipboard import ClipboardReader
@@ -84,11 +83,10 @@ class LoadTextUseCase:
             return LoadTextResult(
                 success=False, text="", error_message="当前剪贴板无文本内容"
             )
-        # 预先计算 clientTextId，避免后续上传时为 0 导致冲突
-        client_text_id = text_id_from_content("custom", text)
+        # 客户端不再计算 hash，text_id 由服务端在提交成绩时 findOrCreate
         return LoadTextResult(
             success=True,
             text=text,
-            text_id=client_text_id,
+            text_id=None,
             source_label="剪贴板",
         )

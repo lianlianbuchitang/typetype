@@ -63,7 +63,8 @@ def test_load_from_plan_uses_local_loader_for_local_source():
     assert success is True
     assert fetched is not None
     assert fetched.content == "local text"
-    assert fetched.text_id != 0  # label + content 联合 hash
+    # 客户端不再计算 hash，text_id 由服务端 findOrCreate
+    assert fetched.text_id is None
     assert error == ""
     # No repeated lookup for source entry since it's already in the plan
     runtime_config.get_text_source.assert_not_called()
@@ -73,7 +74,6 @@ def test_load_from_plan_uses_local_loader_for_local_source():
 
 def test_load_from_plan_uses_text_provider_for_remote_source():
     from src.backend.models.dto.fetched_text import FetchedText
-    from src.backend.utils.text_id import text_id_from_content
 
     gateway, runtime_config, text_provider, local_text_loader = _build_gateway(
         TextSourceEntry(key="remote", label="Remote")
@@ -88,11 +88,8 @@ def test_load_from_plan_uses_text_provider_for_remote_source():
     assert success is True
     assert fetched is not None
     assert fetched.content == "remote text"
-    # 修复后，网络文本使用 source_key + content 计算 hash 作为 client_text_id
-    # 不再保留原来的服务器主键 789
-    expected_client_text_id = text_id_from_content("remote", "remote text")
-    assert fetched.text_id == expected_client_text_id
-    assert fetched.text_id != 789  # 验证确实被覆盖了
+    # 客户端不再计算 hash，保留服务端返回的 text_id
+    assert fetched.text_id == 789
     assert error == ""
     # No repeated lookup for source entry since it's already in the plan
     runtime_config.get_text_source.assert_not_called()

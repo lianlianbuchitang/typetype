@@ -108,6 +108,8 @@ def test_load_from_clipboard_success():
     result = usecase.load_from_clipboard()
     assert result.success
     assert result.text == "clipboard text"
+    # 客户端不再计算 hash，text_id 由服务端 findOrCreate
+    assert result.text_id is None
 
 
 def test_load_from_clipboard_empty():

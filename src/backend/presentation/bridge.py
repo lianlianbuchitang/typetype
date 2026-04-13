@@ -140,10 +140,6 @@ class Bridge(QObject):
     def defaultTextSourceKey(self) -> str:
         return self._text_adapter.get_default_source_key()
 
-    @Property(int, constant=True)
-    def defaultTextId(self) -> int:
-        return self._text_adapter.get_default_source_text_id()
-
     @Property(str, constant=True)
     def defaultTextTitle(self) -> str:
         return self._text_adapter.get_default_source_label()
@@ -219,11 +215,6 @@ class Bridge(QObject):
     @Slot(QQuickTextDocument)
     def handleLoadedText(self, quickDoc: QQuickTextDocument) -> None:
         self._typing_adapter.handleLoadedText(quickDoc)
-
-    @Slot(int)
-    def setTextId(self, text_id: int) -> None:
-        """设置当前文本ID（用于成绩提交）。"""
-        self._typing_adapter.setTextId(text_id)
 
     @Slot(str)
     def setTextTitle(self, title: str) -> None:
