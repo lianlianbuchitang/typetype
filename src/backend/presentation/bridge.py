@@ -50,6 +50,11 @@ class Bridge(QObject):
     leaderboardLoaded = Signal(dict)
     leaderboardLoadFailed = Signal(str)
     leaderboardLoadingChanged = Signal()
+    catalogLoaded = Signal(list)
+    catalogLoadFailed = Signal(str)
+    textListLoaded = Signal(list)
+    textListLoadFailed = Signal(str)
+    textListLoadingChanged = Signal()
     uploadResult = Signal(bool, str)
     tokenExpired = Signal()
 
@@ -128,6 +133,17 @@ class Bridge(QObject):
             self._leaderboard_adapter.leaderboardLoadingChanged.connect(
                 self.leaderboardLoadingChanged.emit
             )
+            self._leaderboard_adapter.textListLoaded.connect(self.textListLoaded.emit)
+            self._leaderboard_adapter.textListLoadFailed.connect(
+                self.textListLoadFailed.emit
+            )
+            self._leaderboard_adapter.textListLoadingChanged.connect(
+                self.textListLoadingChanged.emit
+            )
+            self._leaderboard_adapter.catalogLoaded.connect(self.catalogLoaded.emit)
+            self._leaderboard_adapter.catalogLoadFailed.connect(
+                self.catalogLoadFailed.emit
+            )
 
     def _connect_key_listener(self) -> None:
         if self._key_listener:
@@ -158,6 +174,10 @@ class Bridge(QObject):
     @Property(list, constant=True)
     def textSourceOptions(self) -> list:
         return self._text_adapter.get_source_options()
+
+    @Property(list, constant=True)
+    def rankingSourceOptions(self) -> list:
+        return self._text_adapter.get_ranking_source_options()
 
     @Property(float, notify=totalTimeChanged)
     def totalTime(self) -> float:
@@ -205,6 +225,12 @@ class Bridge(QObject):
             return self._leaderboard_adapter.loading
         return False
 
+    @Property(bool, notify=textListLoadingChanged)
+    def textListLoading(self) -> bool:
+        if self._leaderboard_adapter:
+            return self._leaderboard_adapter.text_list_loading
+        return False
+
     # Slot 入口
 
     @Slot(str)
@@ -239,10 +265,12 @@ class Bridge(QObject):
 
     @Slot(str)
     def requestLoadText(self, source_key: str) -> None:
+        self._typing_adapter.prepare_for_text_load()
         self._text_adapter.requestLoadText(source_key)
 
     @Slot()
     def loadTextFromClipboard(self) -> None:
+        self._typing_adapter.prepare_for_text_load()
         self._text_adapter.loadTextFromClipboard()
 
     @Slot(str, str, str, bool, bool)
@@ -309,6 +337,24 @@ class Bridge(QObject):
         """加载指定来源的排行榜。"""
         if self._leaderboard_adapter:
             self._leaderboard_adapter.loadLeaderboard(source_key)
+
+    @Slot(int)
+    def loadLeaderboardByTextId(self, text_id: int) -> None:
+        """按 text_id 直接加载排行榜。"""
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.loadLeaderboardByTextId(text_id)
+
+    @Slot(str)
+    def loadTextList(self, source_key: str) -> None:
+        """加载来源下的文本列表。"""
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.loadTextList(source_key)
+
+    @Slot()
+    def loadCatalog(self) -> None:
+        """从服务端加载文本来源目录。"""
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.loadCatalog()
 
     @Slot(str)
     def copyToClipboard(self, text: str) -> None:

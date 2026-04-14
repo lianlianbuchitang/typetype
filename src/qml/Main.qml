@@ -27,34 +27,19 @@ FluentWindow {
             title: qsTr("薄弱字"),
             page: Qt.resolvedUrl("pages/WeakCharsPage.qml"),
             icon: "ic_fluent_text_quote_20_regular",
-            position: Position.Top
+            position: Position.None
         },
         {
-            title: qsTr("排行榜"),
+            title: qsTr("文本排行"),
+            page: Qt.resolvedUrl("pages/TextLeaderboardPage.qml"),
             icon: "ic_fluent_trophy_20_regular",
-            subItems: [
-                {
-                    title: qsTr("日榜"),
-                    page: Qt.resolvedUrl("pages/DailyLeaderboard.qml"),
-                    icon: "ic_fluent_calendar_day_20_regular"
-                },
-                {
-                    title: qsTr("周榜"),
-                    page: Qt.resolvedUrl("pages/WeeklyLeaderboard.qml"),
-                    icon: "ic_fluent_calendar_week_start_20_regular"
-                },
-                {
-                    title: qsTr("总榜"),
-                    page: Qt.resolvedUrl("pages/AllTimeLeaderboard.qml"),
-                    icon: "ic_fluent_data_bar_vertical_star_20_regular"
-                }
-            ]
+            position: Position.Top
         },
         {
             title: qsTr("上传文本"),
             page: Qt.resolvedUrl("pages/UploadTextPage.qml"),
             icon: "ic_fluent_document_add_20_regular",
-            position: Position.Top
+            position: Position.None
         },
         {
             title: qsTr("个人中心"),

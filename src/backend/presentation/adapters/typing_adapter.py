@@ -93,7 +93,8 @@ class TypingAdapter(QObject):
 
     def _check_typing_complete(self) -> bool:
         if (
-            self._typing_service.state.score_data.char_count
+            self._typing_service.state.total_chars > 0
+            and self._typing_service.state.score_data.char_count
             >= self._typing_service.state.total_chars
             and self._typing_service.state.is_started
         ):
@@ -124,6 +125,16 @@ class TypingAdapter(QObject):
             self._typing_service.score_data,
             text_id=text_id,
         )
+
+    def prepare_for_text_load(self) -> None:
+        """为新一轮载文做准备：停止当前输入并锁定输入区。"""
+        self._second_timer.stop()
+        self._typing_service.stop()
+        self._typing_service.clear()
+        self._typing_service.set_text_id(None)
+        changed = self._typing_service.set_read_only(True)
+        if changed:
+            self.readOnlyChanged.emit()
 
     # 对外公开的 Slot 方法
 

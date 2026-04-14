@@ -11,6 +11,7 @@ from src.backend.integration.noop_char_stats_repository import NoopCharStatsRepo
 from src.backend.application.usecases.load_text_usecase import LoadTextUseCase
 from src.backend.application.gateways.score_gateway import ScoreGateway
 from src.backend.config.runtime_config import RuntimeConfig
+from src.backend.models.dto.fetched_text import FetchedText
 from src.backend.presentation.adapters.typing_adapter import TypingAdapter
 from src.backend.presentation.adapters.text_adapter import TextAdapter
 from src.backend.presentation.adapters.auth_adapter import AuthAdapter
@@ -27,6 +28,7 @@ class DummyListener(QObject):
 @dataclass
 class DummySource:
     key: str
+    label: str = "测试来源"
     local_path: str | None = None
 
 
@@ -52,7 +54,11 @@ class TestBridgeSpecialPlatform:
             key="test",
             local_path="test.txt",
         )
-        text_gateway.load_from_plan.return_value = (True, "test text", "")
+        text_gateway.load_from_plan.return_value = (
+            True,
+            FetchedText(content="test text", text_id=123, title="测试标题"),
+            "",
+        )
 
         load_text_usecase = LoadTextUseCase(
             text_gateway=text_gateway,
@@ -136,3 +142,41 @@ class TestBridgeSpecialPlatform:
         typing_adapter.handleStartStatus(True)
         bridge.on_key_received(65, "kbd0")
         assert typing_adapter.score_data.key_stroke_count == 0
+
+    def test_request_load_text_locks_typing_until_text_ready(self):
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
+        bridge = Bridge(
+            typing_adapter=typing_adapter,
+            text_adapter=text_adapter,
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
+            key_listener=None,
+        )
+
+        typing_adapter.handleStartStatus(True)
+        assert typing_adapter.text_read_only is False
+
+        bridge.requestLoadText("test")
+
+        assert typing_adapter.text_read_only is True
+
+    def test_load_text_from_clipboard_locks_typing_until_text_ready(self):
+        typing_adapter, text_adapter, auth_adapter, char_stats_adapter = (
+            self._create_mock_services()
+        )
+        bridge = Bridge(
+            typing_adapter=typing_adapter,
+            text_adapter=text_adapter,
+            auth_adapter=auth_adapter,
+            char_stats_adapter=char_stats_adapter,
+            key_listener=None,
+        )
+
+        typing_adapter.handleStartStatus(True)
+        assert typing_adapter.text_read_only is False
+
+        bridge.loadTextFromClipboard()
+
+        assert typing_adapter.text_read_only is True

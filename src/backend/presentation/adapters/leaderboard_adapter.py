@@ -6,6 +6,7 @@ from PySide6.QtCore import QObject, QThreadPool, Signal, Slot
 
 from ...application.gateways.leaderboard_gateway import LeaderboardGateway
 from ...workers.leaderboard_worker import LeaderboardWorker
+from ...workers.text_list_worker import TextListWorker
 
 
 class LeaderboardAdapter(QObject):
@@ -22,28 +23,39 @@ class LeaderboardAdapter(QObject):
     leaderboardLoadFailed = Signal(str)
     leaderboardLoadingChanged = Signal()
 
+    catalogLoaded = Signal(list)  # list of {key, label} dicts
+    catalogLoadFailed = Signal(str)
+
+    textListLoaded = Signal(list)  # list of text summary dicts
+    textListLoadFailed = Signal(str)
+    textListLoadingChanged = Signal()
+
     def __init__(self, leaderboard_gateway: LeaderboardGateway):
         super().__init__()
         self._leaderboard_gateway = leaderboard_gateway
         self._thread_pool = QThreadPool.globalInstance()
         self._loading = False
+        self._text_list_loading = False
 
     def _set_loading(self, loading: bool) -> None:
         if self._loading != loading:
             self._loading = loading
             self.leaderboardLoadingChanged.emit()
 
+    def _set_text_list_loading(self, loading: bool) -> None:
+        if self._text_list_loading != loading:
+            self._text_list_loading = loading
+            self.textListLoadingChanged.emit()
+
     def _on_leaderboard_loaded(self, data: dict[str, Any]) -> None:
         """处理排行榜加载成功。"""
+        self._set_loading(False)
         self.leaderboardLoaded.emit(data)
 
     def _on_leaderboard_load_failed(self, message: str) -> None:
         """处理排行榜加载失败。"""
-        self.leaderboardLoadFailed.emit(message)
-
-    def _on_leaderboard_load_finished(self) -> None:
-        """处理排行榜加载完成。"""
         self._set_loading(False)
+        self.leaderboardLoadFailed.emit(message)
 
     @Slot(str)
     def loadLeaderboard(self, source_key: str) -> None:
@@ -62,9 +74,75 @@ class LeaderboardAdapter(QObject):
         )
         worker.signals.succeeded.connect(self._on_leaderboard_loaded)
         worker.signals.failed.connect(self._on_leaderboard_load_failed)
-        worker.signals.finished.connect(self._on_leaderboard_load_finished)
         self._thread_pool.start(worker)
+
+    @Slot(int)
+    def loadLeaderboardByTextId(self, text_id: int) -> None:
+        """按 text_id 直接加载排行榜。
+
+        Args:
+            text_id: 文本 ID
+        """
+        if self._loading:
+            return
+
+        self._set_loading(True)
+        worker = LeaderboardWorker(
+            leaderboard_gateway=self._leaderboard_gateway,
+            text_id=text_id,
+        )
+        worker.signals.succeeded.connect(self._on_leaderboard_loaded)
+        worker.signals.failed.connect(self._on_leaderboard_load_failed)
+        self._thread_pool.start(worker)
+
+    @Slot()
+    def loadCatalog(self) -> None:
+        """从服务端加载文本来源目录。"""
+        catalog = self._leaderboard_gateway.get_catalog()
+        if catalog is not None:
+            # 转换服务端 TextSource 字段名 (sourceKey → key) 匹配 QML ComboBox
+            options = [
+                {"key": item.get("sourceKey", ""), "label": item.get("label", "")}
+                for item in catalog
+                if item.get("sourceKey")
+            ]
+            self.catalogLoaded.emit(options)
+        else:
+            self.catalogLoadFailed.emit("无法获取文本来源目录")
+
+    @Slot(str)
+    def loadTextList(self, source_key: str) -> None:
+        """加载来源下的文本列表。
+
+        Args:
+            source_key: 文本来源标识，如 "jisubei"
+        """
+        if self._text_list_loading:
+            return
+
+        self._set_text_list_loading(True)
+        worker = TextListWorker(
+            leaderboard_gateway=self._leaderboard_gateway,
+            source_key=source_key,
+        )
+        worker.signals.succeeded.connect(self._on_text_list_loaded)
+        worker.signals.failed.connect(self._on_text_list_failed)
+        self._thread_pool.start(worker)
+
+    def _on_text_list_loaded(self, data: dict[str, Any]) -> None:
+        """处理文本列表加载成功。"""
+        self._set_text_list_loading(False)
+        self.textListLoaded.emit(data.get("texts", []))
+
+    def _on_text_list_failed(self, message: str) -> None:
+        """处理文本列表加载失败。"""
+        self._set_text_list_loading(False)
+        self.textListLoadFailed.emit(message)
 
     @property
     def loading(self) -> bool:
         return self._loading
+
+    @property
+    def text_list_loading(self) -> bool:
+        return self._text_list_loading

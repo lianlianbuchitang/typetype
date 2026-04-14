@@ -222,7 +222,8 @@ class TypingService:
 
             # 检查是否完成
             if (
-                self._state.score_data.char_count >= self._state.total_chars
+                self._state.total_chars > 0
+                and self._state.score_data.char_count >= self._state.total_chars
                 and self._state.is_started
             ):
                 is_completed = True

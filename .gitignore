@@ -73,3 +73,4 @@ pysidedeploy.spec
 *.dll
 data/
 config/config.json
+.omx/

@@ -9,11 +9,12 @@ Pane {
 
     property var textSourceOptions: []
     property string defaultTextSourceKey: ""
-    readonly property string currentSourceKey: sourceSelector.currentValue
+    readonly property string currentSourceKey: sourceSelector.currentValue || ""
 
     signal requestLoadText(string sourceKey)
     signal requestLoadTextFromClipboard // 定义从剪贴板载文信号
     signal requestRetype
+    signal requestToggleLeaderboard
 
     // 将 JS 数组转换为 ListModel，使 RinUI ContextMenu 能正确按 textRole 读取
     ListModel {
@@ -44,59 +45,82 @@ Pane {
         border.width: 1
     }
 
-    Row {
+    RowLayout {
         id: rowLayout
         anchors.fill: parent
+        anchors.leftMargin: 15
+        anchors.rightMargin: 15
         spacing: 15
 
         Image {
             source: resourceBaseUrl + "images/TypeTypeLogo.png"
-            height: 60
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.preferredHeight: 60
+            Layout.alignment: Qt.AlignVCenter
             fillMode: Image.PreserveAspectFit   // 保持宽高比，不会变形
         }
 
         ComboBox {
             id: sourceSelector
-            width: 140
-            height: 40
+            Layout.preferredWidth: 140
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignVCenter
             model: sourceListModel
             textRole: "label"
             valueRole: "key"
-            anchors.verticalCenter: parent.verticalCenter
         }
 
         Button {
             id: loadText
-            width: 140
-            height: 40
+            Layout.preferredWidth: 140
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignVCenter
             text: "载文"
             onClicked: {
-                root.requestLoadText(sourceSelector.currentValue);
+                root.requestLoadText(sourceSelector.currentValue || root.defaultTextSourceKey);
             }
-            anchors.verticalCenter: parent.verticalCenter
         }
 
         Button {
             id: clipboardLoadText
-            width: 140
-            height: 40
+            Layout.preferredWidth: 140
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignVCenter
             text: "剪贴板载文"
             onClicked: {
                 root.requestLoadTextFromClipboard();
             }
-            anchors.verticalCenter: parent.verticalCenter
         }
 
         Button {
             id: retype
-            width: 140
-            height: 40
+            Layout.preferredWidth: 140
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignVCenter
             text: "重打[F3]"
             onClicked: {
                 root.requestRetype();
             }
-            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // Spacer to push leaderboard button to the right
+        Item { Layout.fillWidth: true }
+
+        // 排行榜切换按钮
+        Button {
+            id: leaderboardToggle
+            Layout.preferredWidth: 40
+            Layout.preferredHeight: 40
+            Layout.alignment: Qt.AlignVCenter
+            text: "🏆"
+            onClicked: {
+                root.requestToggleLeaderboard();
+            }
+
+            ToolTip {
+                text: qsTr("排行榜")
+                parent: parent
+                visible: parent.hovered
+            }
         }
     }
 }

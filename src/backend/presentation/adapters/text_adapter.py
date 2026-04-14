@@ -149,8 +149,15 @@ class TextAdapter(QObject):
         return self._text_loading
 
     def get_source_options(self) -> list[dict[str, str]]:
-        """获取 UI 可选的来源列表。"""
+        """获取 UI 可选的来源列表（全部来源，用于载文下拉框）。"""
         return self._runtime_config.text_source_config.get_source_options()
+
+    def get_ranking_source_options(self) -> list[dict[str, str]]:
+        """获取有排行榜的来源列表（用于排行榜页面）。"""
+        return [
+            {"key": source.key, "label": source.label}
+            for source in self._runtime_config.text_source_config.get_ranking_sources()
+        ]
 
     def get_default_source_key(self) -> str:
         return self._runtime_config.text_source_config.default_key

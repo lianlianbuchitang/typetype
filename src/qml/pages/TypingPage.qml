@@ -8,6 +8,7 @@ import "../components"
 Item {
     id: typingPage
     property bool loggedin: false  // Will be injected by NavigationView
+    property bool showLeaderboard: false
 
     //=====================================
     // 函数
@@ -129,6 +130,10 @@ Item {
         function onRequestRetype() {
             handleRetypeRequest();
         }
+
+        function onRequestToggleLeaderboard() {
+            showLeaderboard = !showLeaderboard;
+        }
     }
 
     Keys.onPressed: function (event) {
@@ -191,6 +196,16 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 144
             Layout.minimumHeight: 72
+        }
+
+        LeaderboardPanel {
+            id: leaderboardPanel
+            Layout.fillWidth: true
+            Layout.preferredHeight: 300
+            Layout.minimumHeight: 200
+            visible: showLeaderboard
+            textId: appBridge ? appBridge.textId : 0
+            onCloseRequested: showLeaderboard = false
         }
     }
 
