@@ -3,6 +3,7 @@ from .auth_provider import AuthProvider
 from .local_text_loader import LocalTextLoader
 from .score_submitter import ScoreSubmitter
 from .text_provider import TextProvider
+from .leaderboard_provider import LeaderboardProvider
 
 __all__ = [
     "AuthProvider",
@@ -11,4 +12,5 @@ __all__ = [
     "LocalTextLoader",
     "ScoreSubmitter",
     "TextProvider",
+    "LeaderboardProvider",
 ]
