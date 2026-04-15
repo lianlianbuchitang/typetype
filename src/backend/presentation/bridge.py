@@ -57,6 +57,7 @@ class Bridge(QObject):
     textListLoadingChanged = Signal()
     uploadResult = Signal(bool, str, int)  # (success, message, server_text_id)
     tokenExpired = Signal()
+    textIdChanged = Signal()
 
     def __init__(
         self,
@@ -78,6 +79,7 @@ class Bridge(QObject):
         self._key_listener = key_listener
         self._is_special_platform = key_listener is not None
         self._lower_pane_focused = False
+        self._text_id = 0
 
         self._connect_typing_signals()
         self._connect_text_load_signals()
@@ -231,6 +233,10 @@ class Bridge(QObject):
             return self._leaderboard_adapter.text_list_loading
         return False
 
+    @Property(int, notify=textIdChanged)
+    def textId(self) -> int:
+        return self._text_id
+
     # Slot 入口
 
     @Slot(str)
@@ -261,7 +267,9 @@ class Bridge(QObject):
     @Slot(int)
     def setTextId(self, text_id: int) -> None:
         """设置当前文本ID（用于成绩提交）。"""
+        self._text_id = text_id
         self._typing_adapter.setTextId(text_id if text_id > 0 else None)
+        self.textIdChanged.emit()
 
     @Slot(str)
     def requestLoadText(self, source_key: str) -> None:
@@ -355,6 +363,12 @@ class Bridge(QObject):
         """从服务端加载文本来源目录。"""
         if self._leaderboard_adapter:
             self._leaderboard_adapter.loadCatalog()
+
+    @Slot()
+    def refreshCatalog(self) -> None:
+        """清除缓存并重新从服务端加载文本来源目录。"""
+        if self._leaderboard_adapter:
+            self._leaderboard_adapter.refreshCatalog()
 
     @Slot(str)
     def copyToClipboard(self, text: str) -> None:

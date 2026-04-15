@@ -36,6 +36,7 @@ class LeaderboardAdapter(QObject):
         self._thread_pool = QThreadPool.globalInstance()
         self._loading = False
         self._text_list_loading = False
+        self._catalog_cache: list | None = None
 
     def _set_loading(self, loading: bool) -> None:
         if self._loading != loading:
@@ -97,18 +98,41 @@ class LeaderboardAdapter(QObject):
 
     @Slot()
     def loadCatalog(self) -> None:
-        """从服务端加载文本来源目录。"""
-        catalog = self._leaderboard_gateway.get_catalog()
-        if catalog is not None:
-            # 转换服务端 TextSource 字段名 (sourceKey → key) 匹配 QML ComboBox
-            options = [
-                {"key": item.get("sourceKey", ""), "label": item.get("label", "")}
-                for item in catalog
-                if item.get("sourceKey")
-            ]
-            self.catalogLoaded.emit(options)
-        else:
-            self.catalogLoadFailed.emit("无法获取文本来源目录")
+        """从服务端加载文本来源目录。
+
+        如果缓存存在，直接使用缓存避免重复请求。
+        """
+        if self._catalog_cache is not None:
+            self.catalogLoaded.emit(self._catalog_cache)
+            return
+
+        from ...workers.catalog_worker import CatalogWorker
+
+        worker = CatalogWorker(leaderboard_gateway=self._leaderboard_gateway)
+        worker.signals.succeeded.connect(self._on_catalog_loaded)
+        worker.signals.failed.connect(self._on_catalog_load_failed)
+        self._thread_pool.start(worker)
+
+    def _on_catalog_loaded(self, catalog: list[dict]) -> None:
+        """处理目录加载成功。"""
+        # 转换服务端 TextSource 字段名 (sourceKey → key) 匹配 QML ComboBox
+        options = [
+            {"key": item.get("sourceKey", ""), "label": item.get("label", "")}
+            for item in catalog
+            if item.get("sourceKey")
+        ]
+        self._catalog_cache = options
+        self.catalogLoaded.emit(options)
+
+    def _on_catalog_load_failed(self, message: str) -> None:
+        """处理目录加载失败。"""
+        self.catalogLoadFailed.emit(message)
+
+    @Slot()
+    def refreshCatalog(self) -> None:
+        """清除缓存并重新从服务端加载文本来源目录。"""
+        self._catalog_cache = None
+        self.loadCatalog()
 
     @Slot(str)
     def loadTextList(self, source_key: str) -> None:

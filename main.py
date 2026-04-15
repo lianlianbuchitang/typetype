@@ -17,6 +17,7 @@ from src.backend.infrastructure.api_client import ApiClient
 from src.backend.integration.api_client_auth_provider import ApiClientAuthProvider
 from src.backend.integration.api_client_score_submitter import ApiClientScoreSubmitter
 from src.backend.integration.leaderboard_fetcher import LeaderboardFetcher
+from src.backend.ports.leaderboard_provider import LeaderboardProvider
 from src.backend.integration.text_uploader import TextUploader
 from src.backend.domain.services.auth_service import AuthService
 from src.backend.domain.services.char_stats_service import CharStatsService
@@ -175,12 +176,12 @@ def main():
     char_stats_adapter = CharStatsAdapter(char_stats_service=char_stats_service)
 
     # Leaderboard
-    leaderboard_fetcher = LeaderboardFetcher(
+    leaderboard_provider: LeaderboardProvider = LeaderboardFetcher(
         api_client=api_client,
         base_url=runtime_config.base_url,
         token_provider=_get_jwt_token,
     )
-    leaderboard_gateway = LeaderboardGateway(leaderboard_fetcher=leaderboard_fetcher)
+    leaderboard_gateway = LeaderboardGateway(leaderboard_provider=leaderboard_provider)
     leaderboard_adapter = LeaderboardAdapter(leaderboard_gateway=leaderboard_gateway)
 
     # Upload text adapter
@@ -211,6 +212,9 @@ def main():
     )
 
     bridge.initializeLoginState()
+
+    # 预加载文本来源目录，避免首次切换页面时的网络延迟
+    bridge.loadCatalog()
 
     # 使用 RinUIWindow 接管 engine 和 QML 加载
     rin_window = RinUIWindow()
