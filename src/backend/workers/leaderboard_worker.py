@@ -50,7 +50,7 @@ class LeaderboardWorker(BaseWorker):
         if leaderboard_data is None:
             raise Exception("无法获取排行榜数据")
 
-        records = leaderboard_data.get("records", [])
+        records = leaderboard_data.get("leaderboard", [])
         total = leaderboard_data.get("total", 0)
 
         return {
@@ -75,7 +75,7 @@ class LeaderboardWorker(BaseWorker):
         if leaderboard_data is None:
             raise Exception("无法获取排行榜数据")
 
-        records = leaderboard_data.get("records", [])
+        records = leaderboard_data.get("leaderboard", [])
         total = leaderboard_data.get("total", 0)
 
         return {
