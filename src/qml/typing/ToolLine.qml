@@ -1,11 +1,12 @@
 // qml/ToolLine.qml
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
 import RinUI
 
 Pane {
     id: root
+
+    padding: 8
 
     property var textSourceOptions: []
     property string defaultTextSourceKey: ""
@@ -45,7 +46,7 @@ Pane {
         border.width: 1
     }
 
-    RowLayout {
+    Row {
         id: rowLayout
         anchors.fill: parent
         anchors.leftMargin: 15
@@ -54,16 +55,16 @@ Pane {
 
         Image {
             source: resourceBaseUrl + "images/TypeTypeLogo.png"
-            Layout.preferredHeight: 60
-            Layout.alignment: Qt.AlignVCenter
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             fillMode: Image.PreserveAspectFit   // 保持宽高比，不会变形
         }
 
         ComboBox {
             id: sourceSelector
-            Layout.preferredWidth: 140
-            Layout.preferredHeight: 40
-            Layout.alignment: Qt.AlignVCenter
+            width: 130
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             model: sourceListModel
             textRole: "label"
             valueRole: "key"
@@ -71,9 +72,9 @@ Pane {
 
         Button {
             id: loadText
-            Layout.preferredWidth: 140
-            Layout.preferredHeight: 40
-            Layout.alignment: Qt.AlignVCenter
+            width: 130
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             text: "载文"
             onClicked: {
                 root.requestLoadText(sourceSelector.currentValue || root.defaultTextSourceKey);
@@ -82,9 +83,9 @@ Pane {
 
         Button {
             id: clipboardLoadText
-            Layout.preferredWidth: 140
-            Layout.preferredHeight: 40
-            Layout.alignment: Qt.AlignVCenter
+            width: 130
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             text: "剪贴板载文"
             onClicked: {
                 root.requestLoadTextFromClipboard();
@@ -93,9 +94,9 @@ Pane {
 
         Button {
             id: retype
-            Layout.preferredWidth: 140
-            Layout.preferredHeight: 40
-            Layout.alignment: Qt.AlignVCenter
+            width: 130
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             text: "重打[F3]"
             onClicked: {
                 root.requestRetype();
@@ -103,14 +104,14 @@ Pane {
         }
 
         // Spacer to push leaderboard button to the right
-        Item { Layout.fillWidth: true }
+        Item { width: parent.width - rowLayout.implicitWidth }
 
         // 排行榜切换按钮
         Button {
             id: leaderboardToggle
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
-            Layout.alignment: Qt.AlignVCenter
+            width: 36
+            height: 36
+            anchors.verticalCenter: parent.verticalCenter
             text: "🏆"
             onClicked: {
                 root.requestToggleLeaderboard();

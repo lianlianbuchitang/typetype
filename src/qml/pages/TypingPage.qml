@@ -72,22 +72,9 @@ Item {
         font.pointSize: fontMetricsText.sharedFontSize
     }
 
-    // StackView 每次导航都会 createObject 创建新页面实例，旧实例不会被销毁。
-    // 因此所有 Connections 必须加 enabled 守卫，只在页面处于栈顶时才响应信号，
-    // 否则多个实例同时响应同一信号会导致重复弹窗等问题。
-
+    // textLoaded/textLoadFailed 只在 requestLoadText() 主动调用后才发出，无需守卫
     Connections {
         target: appBridge
-        enabled: typingPage.StackView.status === StackView.Active
-
-        function onHistoryRecordUpdated(newRecord) {
-            historyArea.tableModel.insertRow(0, newRecord);
-        }
-
-        function onTypingEnded() {
-            endDialog.scoreMessage = appBridge.getScoreMessage();
-            endDialog.open();
-        }
 
         function onTextLoaded(text, textId, sourceLabel) {
             applyLoadedText(text);
@@ -103,6 +90,21 @@ Item {
             // 加载失败时只更新显示文本，不调用 handleLoadedText（不禁用 readOnly）
             // 用户无法在加载失败的文本上打字
             upperPane.text = message;
+        }
+    }
+
+    // typingEnded/historyRecordUpdated 来自后台定时器，需要守卫防止旧实例重复弹窗
+    Connections {
+        target: appBridge
+        enabled: typingPage.StackView.status === StackView.Active
+
+        function onHistoryRecordUpdated(newRecord) {
+            historyArea.tableModel.insertRow(0, newRecord);
+        }
+
+        function onTypingEnded() {
+            endDialog.scoreMessage = appBridge.getScoreMessage();
+            endDialog.open();
         }
     }
 
@@ -157,8 +159,12 @@ Item {
         if (appBridge) {
             appBridge.setTextTitle(appBridge.defaultTextTitle);
             appBridge.setTextId(0);
-            // 首次加载也走完整管线，确保能拿到服务端 text_id
-            appBridge.requestLoadText(appBridge.defaultTextSourceKey);
+        }
+    }
+
+    StackView.onActivated: {
+        if (appBridge) {
+            Qt.callLater(function() { appBridge.requestLoadText(appBridge.defaultTextSourceKey); });
         }
     }
 
@@ -172,53 +178,81 @@ Item {
             textSourceOptions: appBridge ? appBridge.textSourceOptions : []
             defaultTextSourceKey: appBridge ? appBridge.defaultTextSourceKey : ""
             Layout.fillWidth: true
-            Layout.preferredHeight: 72
-            Layout.minimumHeight: 72
-            Layout.maximumHeight: 72
+            Layout.preferredHeight: 56
+            Layout.minimumHeight: 56
+            Layout.maximumHeight: 56
         }
 
-        UpperPane {
-            id: upperPane
-            fontSize: fontMetricsText.sharedFontSize  // 绑定到共享属性
-            fontFamily: fontMetricsText.font.family
+        RowLayout {
+            Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumHeight: fontMetricsText.height * 2  // 最小高度：2倍字体高
-        }
+            spacing: 8
 
-        ScoreArea {
-            id: scoreArea
-            Layout.fillWidth: true
-            Layout.preferredHeight: 40
-            Layout.minimumHeight: 40
-            Layout.maximumHeight: 40
-        }
+            // 左侧主要内容区
+            Flickable {
+                id: leftFlickable
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: showLeaderboard ? parent.width - 300 - 8 : parent.width
+                contentHeight: Math.max(leftColumn.implicitHeight, leftFlickable.height)
+                clip: true
 
-        LowerPane {
-            id: lowerPane
-            fontSize: fontMetricsText.sharedFontSize  // 绑定到共享属性
-            fontFamily: fontMetricsText.font.family
-            Layout.fillWidth: true
-            // 固定高度：2倍字体高
-            Layout.preferredHeight: fontMetricsText.height * 2
-            Layout.minimumHeight: fontMetricsText.height * 2 // 保证最少能显示2行
-        }
+                ColumnLayout {
+                    id: leftColumn
+                    width: leftFlickable.width
+                    height: Math.max(implicitHeight, leftFlickable.height)
+                    spacing: 0
 
-        HistoryArea {
-            id: historyArea
-            Layout.fillWidth: true
-            Layout.preferredHeight: 144
-            Layout.minimumHeight: 72
-        }
+                    UpperPane {
+                        id: upperPane
+                        fontSize: fontMetricsText.sharedFontSize  // 绑定到共享属性
+                        fontFamily: fontMetricsText.font.family
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: fontMetricsText.height * 4
+                        Layout.minimumHeight: fontMetricsText.height > 0 ? fontMetricsText.height * 2 : 80
+                    }
 
-        LeaderboardPanel {
-            id: leaderboardPanel
-            Layout.fillWidth: true
-            Layout.preferredHeight: 300
-            Layout.minimumHeight: 200
-            visible: showLeaderboard
-            textId: appBridge ? appBridge.textId : 0
-            onCloseRequested: showLeaderboard = false
+                    ScoreArea {
+                        id: scoreArea
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36
+                        Layout.minimumHeight: 36
+                        Layout.maximumHeight: 36
+                    }
+
+                    LowerPane {
+                        id: lowerPane
+                        fontSize: fontMetricsText.sharedFontSize  // 绑定到共享属性
+                        fontFamily: fontMetricsText.font.family
+                        Layout.fillWidth: true
+                        // 固定高度：2倍字体高
+                        Layout.preferredHeight: fontMetricsText.height > 0 ? fontMetricsText.height * 3 : 80
+                        Layout.minimumHeight: fontMetricsText.height > 0 ? fontMetricsText.height * 2 : 80 // 保证最少能显示2行
+                    }
+
+                    HistoryArea {
+                        id: historyArea
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true  // 拿走所有剩余空间
+                        Layout.minimumHeight: 72  // 最小高度保证至少能看到一条历史记录
+                    }
+                }
+            }
+
+            // 右侧排行榜面板
+            LeaderboardPanel {
+                id: leaderboardPanel
+                Layout.preferredWidth: showLeaderboard ? 300 : 0
+                Layout.fillHeight: true
+                Layout.minimumHeight: 200
+                visible: showLeaderboard
+                textId: appBridge.textId  // 绑定属性，会自动更新
+                onCloseRequested: showLeaderboard = false
+
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                }
+            }
         }
     }
 

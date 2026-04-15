@@ -7,10 +7,10 @@ import RinUI
 FluentWindow {
     id: root
     visible: true
-    width: 960
-    height: 640
-    minimumWidth: 640
-    minimumHeight: 480
+    width: 1024
+    height: 768
+    minimumWidth: 800
+    minimumHeight: 520
     title: "TypeType"
 
     // Expose loggedin state to NavigationView for page injection

@@ -7,6 +7,10 @@ FluentPage {
     id: textLeaderboardPage
     title: qsTr("文本排行榜")
 
+    // 减少 FluentPage 默认的大侧边距，给排行榜表格留足空间
+    horizontalPadding: 20
+    wrapperWidth: 2000
+
     // 当前选中文本
     property int selectedTextId: -1
     property string selectedTextTitle: ""
@@ -45,18 +49,18 @@ FluentPage {
     RowLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(textLeaderboardPage._availableHeight, 300)
-        spacing: 12
+        spacing: 6
 
         // ========== 左侧文本列表面板 ==========
         Frame {
-            Layout.preferredWidth: 280
+            Layout.preferredWidth: 180
             Layout.fillHeight: true
-            radius: 8
+            radius: 6
             hoverable: false
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 8
+                spacing: 4
 
                 // 文本源选择器
                 ComboBox {
@@ -81,24 +85,25 @@ FluentPage {
                 // 文本列表标题
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
                     IconWidget {
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
                         icon: "ic_fluent_document_text_20_regular"
                         color: Theme.currentTheme.colors.primaryColor
                     }
 
                     Text {
                         Layout.fillWidth: true
-                        typography: Typography.BodyStrong
+                        typography: Typography.Caption
+                        font.weight: Font.DemiBold
                         text: qsTr("文本列表 (%1)").arg(textListModel.count)
                     }
 
                     BusyIndicator {
-                        Layout.preferredWidth: 16
-                        Layout.preferredHeight: 16
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
                         running: appBridge ? appBridge.textListLoading : false
                         visible: running
                     }
@@ -126,12 +131,12 @@ FluentPage {
 
                     Text {
                         anchors.centerIn: parent
-                        typography: Typography.Body
+                        typography: Typography.Caption
                         color: Theme.currentTheme.colors.textSecondaryColor
                         text: qsTr("暂无文本")
                         visible: textListModel.count === 0 && !(appBridge && appBridge.textListLoading)
                         horizontalAlignment: Text.AlignHCenter
-                        width: parent.width - 40
+                        width: parent.width - 20
                     }
                 }
             }
@@ -141,21 +146,21 @@ FluentPage {
         Frame {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: 8
+            radius: 6
             hoverable: false
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 8
+                spacing: 4
 
                 // 排行榜标题
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 6
 
                     IconWidget {
-                        Layout.preferredWidth: 22
-                        Layout.preferredHeight: 22
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
                         icon: "ic_fluent_trophy_20_filled"
                         color: Theme.currentTheme.colors.primaryColor
                     }
@@ -172,8 +177,8 @@ FluentPage {
                     }
 
                     BusyIndicator {
-                        Layout.preferredWidth: 20
-                        Layout.preferredHeight: 20
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
                         running: appBridge ? appBridge.leaderboardLoading : false
                         visible: running
                     }
@@ -187,7 +192,6 @@ FluentPage {
                 }
 
                 // 排行榜表格（支持水平滚动）
-                property int _tableContentWidth: 480 // 40+1+100+1+70+1+55+1+50+1+55+1+45+1+50+1+100 = 474 + margins
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -199,21 +203,21 @@ FluentPage {
 
                         // 表头（同步水平滚动）
                         Rectangle {
-                            width: parent.width
-                            height: 36
+                            width: tableFlickable.contentWidth
+                            height: 32
                             color: Theme.currentTheme.colors.subtleSecondaryColor
                             clip: true
 
                             RowLayout {
+                                id: headerRow
                                 x: -tableFlickable.contentX
                                 width: implicitWidth
                                 height: parent.height
-                                anchors.leftMargin: 0
                                 spacing: 0
 
                                 // 排名
                                 Rectangle {
-                                    Layout.preferredWidth: 40
+                                    Layout.preferredWidth: 50
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -227,7 +231,7 @@ FluentPage {
 
                                 // 用户
                                 Rectangle {
-                                    Layout.preferredWidth: 100
+                                    Layout.preferredWidth: 110
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -255,7 +259,7 @@ FluentPage {
 
                                 // 击键
                                 Rectangle {
-                                    Layout.preferredWidth: 55
+                                    Layout.preferredWidth: 60
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -269,7 +273,7 @@ FluentPage {
 
                                 // 码长
                                 Rectangle {
-                                    Layout.preferredWidth: 50
+                                    Layout.preferredWidth: 60
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -283,7 +287,7 @@ FluentPage {
 
                                 // 准确率
                                 Rectangle {
-                                    Layout.preferredWidth: 55
+                                    Layout.preferredWidth: 65
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -297,7 +301,7 @@ FluentPage {
 
                                 // 错字
                                 Rectangle {
-                                    Layout.preferredWidth: 45
+                                    Layout.preferredWidth: 50
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -311,7 +315,7 @@ FluentPage {
 
                                 // 时长
                                 Rectangle {
-                                    Layout.preferredWidth: 50
+                                    Layout.preferredWidth: 55
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -325,7 +329,8 @@ FluentPage {
 
                                 // 日期
                                 Rectangle {
-                                    Layout.preferredWidth: 100
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 90
                                     Layout.fillHeight: true
                                     color: "transparent"
                                     Text {
@@ -349,8 +354,8 @@ FluentPage {
                         Flickable {
                             id: tableFlickable
                             width: parent.width
-                            height: parent.height - 37
-                            contentWidth: textLeaderboardPage._tableContentWidth
+                            height: parent.height - 33
+                            contentWidth: headerRow.implicitWidth
                             contentHeight: height
                             flickableDirection: Flickable.HorizontalFlick
                             clip: true
@@ -361,7 +366,7 @@ FluentPage {
                             }
 
                             Column {
-                                width: textLeaderboardPage._tableContentWidth
+                                width: tableFlickable.contentWidth
                                 height: parent.height
                                 spacing: 0
 
@@ -416,7 +421,7 @@ FluentPage {
 
         Rectangle {
             width: textListView.width
-            height: 60
+            height: 48
             radius: 4
             property bool isSelected: model.id === selectedTextId
             color: isSelected ? Qt.rgba(
@@ -444,14 +449,15 @@ FluentPage {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 6
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
+                spacing: 4
 
                 // 选中指示箭头
                 Text {
-                    Layout.preferredWidth: 14
+                    Layout.preferredWidth: 10
                     typography: Typography.Caption
+                    font.pixelSize: 11
                     color: Theme.currentTheme.colors.primaryColor
                     text: "▸"
                     visible: isSelected
@@ -459,22 +465,24 @@ FluentPage {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: 1
 
                     // 标题
                     Text {
                         Layout.fillWidth: true
                         typography: Typography.Caption
                         font.weight: Font.DemiBold
+                        font.pixelSize: 11
                         text: model.title || ""
                         elide: Text.ElideRight
                         color: isSelected ? Theme.currentTheme.colors.primaryColor : Theme.currentTheme.colors.textColor
                     }
 
-                    // 字数 · 人数
+                    // 字数
                     Text {
                         Layout.fillWidth: true
                         typography: Typography.Caption
+                        font.pixelSize: 10
                         color: Theme.currentTheme.colors.textSecondaryColor
                         text: {
                             var chars = model.char_count !== undefined ? model.char_count : "?";
@@ -502,7 +510,7 @@ FluentPage {
 
         Rectangle {
             width: leaderboardListView.width
-            height: 40
+            height: 36
             color: index % 2 === 0 ? Theme.currentTheme.colors.subtleColor : Theme.currentTheme.colors.cardColor
 
             property bool hovered: lbMouseArea.containsMouse
@@ -517,13 +525,11 @@ FluentPage {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 4
-                anchors.rightMargin: 4
                 spacing: 0
 
                 // 排名
                 Rectangle {
-                    Layout.preferredWidth: 40
+                    Layout.preferredWidth: 50
                     Layout.fillHeight: true
                     color: "transparent"
 
@@ -533,8 +539,8 @@ FluentPage {
 
                         IconWidget {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 14
-                            height: 14
+                            width: 12
+                            height: 12
                             visible: modelData.rank <= 3
                             icon: "ic_fluent_trophy_20_filled"
                             color: modelData.rank === 1 ? "#FFD700" :
@@ -560,7 +566,7 @@ FluentPage {
 
                 // 用户
                 Rectangle {
-                    Layout.preferredWidth: 100
+                    Layout.preferredWidth: 110
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -583,6 +589,7 @@ FluentPage {
                         anchors.centerIn: parent
                         typography: Typography.Caption
                         color: Theme.currentTheme.colors.primaryColor
+                        font.weight: Font.DemiBold
                         text: modelData.speed ? Number(modelData.speed).toFixed(1) : "-"
                     }
                 }
@@ -590,7 +597,7 @@ FluentPage {
 
                 // 击键
                 Rectangle {
-                    Layout.preferredWidth: 55
+                    Layout.preferredWidth: 60
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -603,7 +610,7 @@ FluentPage {
 
                 // 码长
                 Rectangle {
-                    Layout.preferredWidth: 50
+                    Layout.preferredWidth: 60
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -616,7 +623,7 @@ FluentPage {
 
                 // 准确率
                 Rectangle {
-                    Layout.preferredWidth: 55
+                    Layout.preferredWidth: 65
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -635,7 +642,7 @@ FluentPage {
 
                 // 错字
                 Rectangle {
-                    Layout.preferredWidth: 45
+                    Layout.preferredWidth: 50
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -654,7 +661,7 @@ FluentPage {
 
                 // 时长
                 Rectangle {
-                    Layout.preferredWidth: 50
+                    Layout.preferredWidth: 55
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
@@ -668,13 +675,19 @@ FluentPage {
 
                 // 日期
                 Rectangle {
-                    Layout.preferredWidth: 100
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 90
                     Layout.fillHeight: true
                     color: "transparent"
                     Text {
                         anchors.centerIn: parent
                         typography: Typography.Caption
                         color: Theme.currentTheme.colors.textSecondaryColor
+                        Component.onCompleted: {
+                            if (!modelData.createdAt) {
+                                console.log("[DEBUG] LB record keys:", JSON.stringify(Object.keys(modelData)))
+                            }
+                        }
                         text: modelData.createdAt ? formatDate(modelData.createdAt) : "-"
                     }
                 }
@@ -754,6 +767,23 @@ FluentPage {
                     visible: parent.hovered
                 }
             }
+
+            ToolButton {
+                icon.name: "ic_fluent_database_arrow_down_20_regular"
+                size: 20
+                flat: true
+                onClicked: {
+                    if (appBridge) {
+                        appBridge.refreshCatalog();
+                    }
+                }
+
+                ToolTip {
+                    text: qsTr("刷新目录")
+                    parent: parent
+                    visible: parent.hovered
+                }
+            }
         }
     ]
 
@@ -775,9 +805,9 @@ FluentPage {
     }
 
     // ========== 信号连接 ==========
+    // catalogLoaded 只在 loadCatalog() 主动调用后才发出，无需 StackView.status 守卫
     Connections {
         target: appBridge
-        enabled: textLeaderboardPage.StackView.status === StackView.Active
 
         function onCatalogLoaded(catalog) {
             syncSourceOptions(catalog);
@@ -790,6 +820,12 @@ FluentPage {
         function onCatalogLoadFailed(message) {
             errorInfoBar.showError(message);
         }
+    }
+
+    // 文本列表和排行榜信号来自异步 Worker，需要守卫防止旧实例处理
+    Connections {
+        target: appBridge
+        enabled: textLeaderboardPage.StackView.status === StackView.Active
 
         function onTextListLoaded(texts) {
             textListModel.clear();
@@ -834,9 +870,12 @@ FluentPage {
     }
 
     // ========== 页面激活时加载数据 ==========
+    property bool catalogLoadedOnce: false
     StackView.onActivated: {
-        if (appBridge) {
+        if (appBridge && !catalogLoadedOnce) {
             appBridge.loadCatalog();
+            catalogLoadedOnce = true;
         }
     }
+
 }

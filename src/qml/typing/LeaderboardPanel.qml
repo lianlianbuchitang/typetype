@@ -5,7 +5,7 @@ import RinUI
 
 Frame {
     id: root
-    radius: 0
+    radius: 4
     hoverable: false
     color: Theme.currentTheme.colors.cardColor
 
@@ -22,18 +22,18 @@ Frame {
         // Header
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 44
+            Layout.preferredHeight: 36
             color: Theme.currentTheme.colors.subtleColor
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 8
-                spacing: 8
+                anchors.leftMargin: 10
+                anchors.rightMargin: 6
+                spacing: 6
 
                 IconWidget {
-                    Layout.preferredWidth: 20
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
                     Layout.alignment: Qt.AlignVCenter
                     icon: "ic_fluent_trophy_20_filled"
                     color: Theme.currentTheme.colors.primaryColor
@@ -43,13 +43,14 @@ Frame {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
                     typography: Typography.BodyStrong
+                    font.pixelSize: 13
                     text: currentTextInfo ? currentTextInfo.title : qsTr("排行榜")
                     elide: Text.ElideRight
                 }
 
                 Button {
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     flat: true
                     enabled: appBridge ? !appBridge.leaderboardLoading : true
                     onClicked: {
@@ -59,16 +60,17 @@ Frame {
                     }
                     contentItem: IconWidget {
                         icon: "ic_fluent_arrow_sync_20_regular"
-                        size: 14
+                        size: 12
                         color: Theme.currentTheme.colors.textSecondaryColor
                     }
                 }
 
                 Button {
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
                     text: "✕"
                     flat: true
+                    font.pixelSize: 11
                     onClicked: root.closeRequested()
                 }
             }
@@ -81,29 +83,30 @@ Frame {
             color: Theme.currentTheme.colors.cardBorderColor
         }
 
-        // My rank card (visible when logged in and has data)
+        // My rank card (compact, visible when logged in and has data)
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 56
+            Layout.preferredHeight: 40
             visible: appBridge && appBridge.loggedin && leaderboardRecords.length > 0
             color: Theme.currentTheme.colors.subtleSecondaryColor
 
-            ColumnLayout {
+            RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                anchors.topMargin: 8
-                anchors.bottomMargin: 8
-                spacing: 2
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 6
 
                 Text {
                     typography: Typography.Caption
+                    font.pixelSize: 12
                     color: Theme.currentTheme.colors.textSecondaryColor
                     text: qsTr("我的排名")
                 }
 
                 Text {
+                    Layout.fillWidth: true
                     typography: Typography.BodyStrong
+                    font.pixelSize: 13
                     color: Theme.currentTheme.colors.primaryColor
                     text: {
                         if (!appBridge || !appBridge.loggedin) return "--";
@@ -131,19 +134,20 @@ Frame {
         // Table header
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
+            Layout.preferredHeight: 28
             color: Theme.currentTheme.colors.subtleColor
             visible: leaderboardRecords.length > 0
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 4
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
+                spacing: 2
 
                 Text {
-                    Layout.preferredWidth: 32
+                    Layout.preferredWidth: 28
                     typography: Typography.Caption
+                    font.pixelSize: 11
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignHCenter
                     text: qsTr("名次")
@@ -152,13 +156,15 @@ Frame {
                 Text {
                     Layout.fillWidth: true
                     typography: Typography.Caption
+                    font.pixelSize: 11
                     font.weight: Font.DemiBold
                     text: qsTr("用户")
                 }
 
                 Text {
-                    Layout.preferredWidth: 60
+                    Layout.preferredWidth: 50
                     typography: Typography.Caption
+                    font.pixelSize: 11
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignRight
                     text: qsTr("速度")
@@ -177,19 +183,20 @@ Frame {
         // Loading indicator
         BusyIndicator {
             Layout.alignment: Qt.AlignCenter
-            Layout.topMargin: 40
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
+            Layout.topMargin: 30
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
             visible: appBridge && appBridge.leaderboardLoading
         }
 
         // "本地文本" message
         Text {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 60
-            Layout.leftMargin: 20
-            Layout.rightMargin: 20
+            Layout.topMargin: 40
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
             typography: Typography.Body
+            font.pixelSize: 12
             color: Theme.currentTheme.colors.textSecondaryColor
             text: qsTr("本地文本不参与排行")
             visible: root.textId === 0
@@ -200,10 +207,11 @@ Frame {
         // "暂无数据" message
         Text {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 60
-            Layout.leftMargin: 20
-            Layout.rightMargin: 20
+            Layout.topMargin: 40
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
             typography: Typography.Body
+            font.pixelSize: 12
             color: Theme.currentTheme.colors.textSecondaryColor
             text: qsTr("暂无排行数据")
             visible: root.textId > 0 && leaderboardRecords.length === 0 && !(appBridge && appBridge.leaderboardLoading)
@@ -222,7 +230,7 @@ Frame {
 
             delegate: Rectangle {
                 width: lbListView.width
-                height: 36
+                height: 30
                 color: index % 2 === 0 ? "transparent" : Theme.currentTheme.colors.subtleColor
 
                 property bool hovered: lbMouseArea.containsMouse
@@ -240,43 +248,38 @@ Frame {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    spacing: 4
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    spacing: 2
 
                     // Rank with trophy
-                    Rectangle {
-                        Layout.preferredWidth: 32
-                        Layout.fillHeight: true
-                        color: "transparent"
+                    Row {
+                        Layout.preferredWidth: 28
+                        spacing: 1
 
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 1
+                        IconWidget {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 10
+                            height: 10
+                            visible: modelData.rank <= 3
+                            icon: "ic_fluent_trophy_20_filled"
+                            color: modelData.rank === 1 ? "#FFD700" :
+                                   modelData.rank === 2 ? "#C0C0C0" :
+                                   "#CD7F32"
+                        }
 
-                            IconWidget {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 12
-                                height: 12
-                                visible: modelData.rank <= 3
-                                icon: "ic_fluent_trophy_20_filled"
-                                color: modelData.rank === 1 ? "#FFD700" :
-                                       modelData.rank === 2 ? "#C0C0C0" :
-                                       "#CD7F32"
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            typography: Typography.Caption
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                            color: {
+                                if (modelData.rank === 1) return "#FFD700";
+                                if (modelData.rank === 2) return "#C0C0C0";
+                                if (modelData.rank === 3) return "#CD7F32";
+                                return Theme.currentTheme.colors.textColor;
                             }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                typography: Typography.Caption
-                                font.weight: Font.DemiBold
-                                color: {
-                                    if (modelData.rank === 1) return "#FFD700";
-                                    if (modelData.rank === 2) return "#C0C0C0";
-                                    if (modelData.rank === 3) return "#CD7F32";
-                                    return Theme.currentTheme.colors.textColor;
-                                }
-                                text: modelData.rank
-                            }
+                            text: modelData.rank
                         }
                     }
 
@@ -284,14 +287,16 @@ Frame {
                     Text {
                         Layout.fillWidth: true
                         typography: Typography.Caption
+                        font.pixelSize: 11
                         text: modelData.nickname || modelData.username || qsTr("匿名")
                         elide: Text.ElideRight
                     }
 
                     // Speed
                     Text {
-                        Layout.preferredWidth: 60
+                        Layout.preferredWidth: 50
                         typography: Typography.Caption
+                        font.pixelSize: 11
                         font.weight: Font.DemiBold
                         color: Theme.currentTheme.colors.primaryColor
                         horizontalAlignment: Text.AlignRight
@@ -304,9 +309,13 @@ Frame {
                 policy: ScrollBar.AsNeeded
             }
         }
+    }
 
-        // Spacer
-        Item { Layout.fillHeight: true }
+    // 当面板打开且 textId 存在时，自动加载数据
+    onVisibleChanged: {
+        if (visible && root.textId > 0 && appBridge) {
+            appBridge.loadLeaderboardByTextId(root.textId);
+        }
     }
 
     // Listen for leaderboard updates
