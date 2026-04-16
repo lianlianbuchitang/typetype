@@ -76,7 +76,7 @@ QML UI
 | Presentation | `TypingAdapter` / `TextAdapter` / `AuthAdapter` / `CharStatsAdapter` / `LeaderboardAdapter` / `UploadTextAdapter` | Qt 适配、线程协调、错误回传 |
 | Application | `LoadTextUseCase` | 文本加载编排入口 |
 | Application | `TextSourceGateway` / `ScoreGateway` / `LeaderboardGateway` / `GlobalExceptionHandler` | 来源路由、DTO/剪贴板、异常消息映射 |
-| Workers | `BaseWorker` / `TextLoadWorker` / `SessionStatWorker` / `LeaderboardWorker` / `TextListWorker` / `WeakCharsQueryWorker` | 后台任务执行、异常统一处理 |
+| Workers | `BaseWorker` / `TextLoadWorker` / `LeaderboardWorker` / `TextListWorker` / `WeakCharsQueryWorker` | 后台任务执行、异常统一处理 |
 | Domain | `TypingService` / `CharStatsService` / `AuthService` | 纯业务逻辑、状态管理、统计计算 |
 | Ports | `TextProvider` / `LocalTextLoader` / `Clipboard*` / `AuthProvider` / `CharStatsRepository` / `TextUploader` / `ScoreSubmitter` / `LeaderboardProvider` / `AsyncExecutor` | 抽象协议 |
 | Integration | `RemoteTextProvider` / `QtLocalTextLoader` / `ApiClientAuthProvider` / `SqliteCharStatsRepository` / `LeaderboardFetcher` 等 | Port 实现 |
@@ -134,7 +134,6 @@ src/backend/
 │   ├── text_uploader.py
 │   ├── async_executor.py
 │   ├── leaderboard_provider.py
-│   └── ranking_repository.py
 ├── presentation/
 │   ├── bridge.py
 │   └── adapters/
@@ -149,8 +148,8 @@ src/backend/
 │   └── text_id.py
 └── workers/
     ├── base_worker.py
+    ├── catalog_worker.py
     ├── text_load_worker.py
-    ├── session_stat_worker.py
     ├── leaderboard_worker.py
     ├── text_list_worker.py
     └── weak_chars_query_worker.py
@@ -444,8 +443,8 @@ Domain 可以依赖 **抽象协议（Port）**，不能依赖 **具体 Qt / HTTP
 | 日期 | 变更 |
 |------|------|
 | 2026-04-15 | 补全文档遗漏：新增 LeaderboardProvider/AsyncExecutor 端口、LeaderboardGateway/Adapter/Worker、TextListWorker、WeakCharsQueryWorker、UploadTextAdapter、text_id 工具等 |
+| 2026-04-13 | 架构重构：只有服务端文本才能提交成绩；客户端移除 hash 计算；删除无感上传回调链路；source_key 不再进入成绩提交链路 |
 | 2026-04-11 | 新增 TextUploader Port、text_id 生成逻辑、无感上传链路；移除配置中 text_id 字段 |
 | 2026-04-06 | 基于当前源码重写：补充对象装配、QML 页面结构、真实数据流与边界判断 |
 | 2026-04-03 | 重写文本加载闭口后的边界规则 |
-| 2026-04-13 | 架构重构：只有服务端文本才能提交成绩；客户端移除 hash 计算；删除无感上传回调链路；source_key 不再进入成绩提交链路 |
 | 2026-03-21 | 首次创建 |

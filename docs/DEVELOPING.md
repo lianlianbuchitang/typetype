@@ -281,6 +281,8 @@ logger.info("普通信息")
 - `pages/DailyLeaderboard.qml`
 - `pages/WeeklyLeaderboard.qml`
 - `pages/AllTimeLeaderboard.qml`
+- `pages/TextLeaderboardPage.qml`
+- `pages/UploadTextPage.qml`
 - `pages/ProfilePage.qml`
 - `pages/SettingsPage.qml`
 
@@ -299,7 +301,7 @@ logger.info("普通信息")
 
 ### 本地测试文件
 
-当前仓库有 12 个 `tests/test_*.py` 文件，覆盖重点在：
+当前仓库有 18 个 `tests/test_*.py` 文件，覆盖重点在：
 
 - `ApiClient`
 - `TextSourceGateway`
@@ -321,23 +323,15 @@ logger.info("普通信息")
 
 ### Commit message
 
-仓库当前要求使用 **Lore Commit Protocol**，即提交信息优先表达“为什么改”，并通过 trailers 记录约束、验证与风险。
-
-推荐格式：
+仓库当前使用 **Conventional Commits** 风格，提交信息格式为：
 
 ```text
-<意图行：为什么做这次修改>
+<type>: <简要描述>
 
-<body：背景、约束、方案取舍>
-
-Constraint: <外部约束>
-Rejected: <备选方案> | <拒绝原因>
-Confidence: <low|medium|high>
-Scope-risk: <narrow|moderate|broad>
-Directive: <给后续维护者的提醒>
-Tested: <已验证内容>
-Not-tested: <未验证内容>
+<可选 body：背景、方案取舍、注意事项>
 ```
+
+常用 type：`feat`（新功能）、`fix`（修复）、`refactor`（重构）、`docs`（文档）、`test`（测试）、`style`（格式）、`merge`（合并）。
 
 如果你只是本地试验、不会提交，可以暂时忽略；但正式提交请遵守仓库约定。
 

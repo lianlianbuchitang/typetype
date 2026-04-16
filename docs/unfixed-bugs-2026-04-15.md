@@ -1,6 +1,7 @@
 # TypeType 未修复 Bug 详细记录
 
 **日期**: 2026-04-15
+**最后更新**: 2026-04-16（代码状态校验）
 **状态**: 3 个问题均未修复，已尝试多种方案均被用户确认无效
 
 ---
@@ -10,17 +11,19 @@
 **现象**: TypingPage 顶部的 ToolLine 组件（载文、剪贴板载文、重打、排行榜按钮）全部不可见。
 
 **已尝试的修复**（均无效）:
-1. RinUI Button.qml 中移除 `font: text.font` 绑定
+1. ~~RinUI Button.qml 中移除 `font: text.font` 绑定~~（commit 168d00a 已执行，仍无效）
 2. 将 ToolLine.qml 根组件从 QtQuick.Controls `Pane` 改为 RinUI `Frame`
 3. 移除自定义 `background`，改用 Frame 自带属性（padding, radius, color, borderColor）
 4. 清除 `/home/wangyu/.cache/main.py/qmlcache/` 目录
 5. 清除 Python `__pycache__`
 
-**当前代码状态**: ToolLine.qml 使用 RinUI Frame 作为根组件，padding:0，RowLayout 使用 anchors.fill: parent。
+**当前代码状态**（2026-04-16 校验）:
+- `Button.qml`: `font: text.font` 绑定已移除（commit 168d00a）
+- `ToolLine.qml`: 根组件已恢复为 QtQuick.Controls `Pane`（padding: 8），内部使用 `Row`（非 RowLayout）
 
-**可能的真正根因**: RinUI Frame 的 `clip: true` 可能裁切了内容；或者 RinUI 的类型加载顺序导致组件解析失败。
+**可能的真正根因**: RinUI 组件的类型加载顺序导致 Button 组件解析失败；或 Pane 的尺寸策略与 RinUI 主题冲突。
 
-**关键文件**: `src/qml/typing/ToolLine.qml`, `RinUI/components/ListAndCollections/Frame.qml`, `RinUI/components/BasicInput/Button.qml`
+**关键文件**: `src/qml/typing/ToolLine.qml`, `RinUI/components/BasicInput/Button.qml`
 
 ---
 
