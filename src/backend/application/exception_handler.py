@@ -17,7 +17,6 @@ from ..infrastructure.network_errors import (
     SubmitScoreError,
 )
 
-
 # 异常 → 用户消息映射（可扩展，新增异常类型时在此添加）
 _EXCEPTION_MESSAGE_MAP: dict[type[Exception], str] = {
     NetworkTimeoutError: "网络连接超时，请检查网络后重试",

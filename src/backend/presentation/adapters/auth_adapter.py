@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, QTimer, QThreadPool, Signal, Slot
+from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal, Slot
 
 from ...domain.services.auth_service import AuthService
 from ...utils.logger import log_info, log_warning

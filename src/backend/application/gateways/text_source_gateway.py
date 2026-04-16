@@ -12,8 +12,8 @@
 
 from typing import TYPE_CHECKING
 
-from ...models.dto.fetched_text import FetchedText
 from ...config.runtime_config import RuntimeConfig
+from ...models.dto.fetched_text import FetchedText
 from ...ports.local_text_loader import LocalTextLoader
 from ...ports.text_provider import TextProvider
 from ...utils.text_id import text_id_from_content

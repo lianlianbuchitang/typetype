@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from ..gateways.text_source_gateway import TextSourceGateway
 from ...config.text_source_config import TextSourceEntry
 from ...ports.clipboard import ClipboardReader
+from ..gateways.text_source_gateway import TextSourceGateway
 
 
 @dataclass(frozen=True)

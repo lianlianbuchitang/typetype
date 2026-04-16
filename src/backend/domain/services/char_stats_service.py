@@ -1,6 +1,6 @@
+from ...models.entity.char_stat import CharStat
 from ...ports.async_executor import AsyncExecutor
 from ...ports.char_stats_repository import CharStatsRepository
-from ...models.entity.char_stat import CharStat
 
 
 class CharStatsService:
