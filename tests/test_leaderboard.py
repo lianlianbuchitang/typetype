@@ -89,6 +89,7 @@ class TestLeaderboardFetcher:
 
     def _make_fetcher(self, token: str = ""):
         api_client = MagicMock()
+        api_client.last_error = None  # 默认无网络错误
         fetcher = LeaderboardFetcher(
             api_client=api_client,
             base_url="https://example.com",
