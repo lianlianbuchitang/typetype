@@ -126,12 +126,13 @@ src/backend/
     ├── base_worker.py
     ├── text_load_worker.py
     ├── session_stat_worker.py
+    ├── catalog_worker.py
     ├── leaderboard_worker.py
     ├── text_list_worker.py
     └── weak_chars_query_worker.py
 ```
 
-RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
+RinUI/                   # 第三方 QML 框架（本地 vendored，少量必要修改，见 docs/ARCHITECTURE.md）
 
 ### 分层架构
 
@@ -180,7 +181,8 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 - **GlobalExceptionHandler 集中处理异常语义**（网络异常 → 用户友好消息），类似 Spring Boot 的 `@ControllerAdvice`。
 - **BaseWorker 统一捕获后台任务异常**，调用 GlobalExceptionHandler 转换后发射 `failed` 信号。
 - **UseCases 编排业务流程**（路由 + 业务验证），异常上浮由 BaseWorker 统一处理。
-- 文本加载支持 `network` 与 `local` 两类来源。
+- 文本加载支持 `network` 与 `local` 两类来源，**所有加载统一走后台 Worker**，避免主线程同步 I/O 阻塞 UI。
+- **FluentPage 不使用 `layer.effect`**（避免 GPU 离屏渲染阻塞页面切换），圆角裁切由 `Flickable.clip` 和 `appLayer` 背景配合实现。
 - UI 框架使用 RinUI（vendored），提供主题、组件和暗色模式支持。
 - UI 字体由 `main.py` 中 `app.setFont()` 全局设置，QML 层不再传递字体属性。
 - `pyproject.toml` 中 `[tool.ruff] exclude = ["RinUI"]` 排除第三方代码的 lint 检查。
@@ -203,7 +205,7 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，不修改）
 | | WeakCharsQueryWorker | 弱字符后台查询 |
 | **Presentation** | Bridge | QML 通信适配层：属性代理、信号转发、Slot 入口 |
 | | TypingAdapter | Qt 适配（计时器、文本着色、信号发射） |
-| | TextAdapter | Qt 适配（异步 Worker、信号发射） |
+| | TextAdapter | Qt 适配（所有加载走 Worker、信号发射、UI 配置展示） |
 | | LeaderboardAdapter | 排行榜 Qt 适配（异步 Worker、信号管理） |
 | | UploadTextAdapter | 文本上传 Qt 适配（本地写入 + 云端上传） |
 
@@ -296,6 +298,8 @@ bridge = Bridge(
 
 - 使用 `Property + notify signal` 做响应式更新
 - UI 不执行耗时任务，耗时逻辑走 `workers`
+- RinUI `ContextMenu` 的 `height` 动画必须用 `Behavior on height`，不能在 `enter` transition 中动画（原因见已知陷阱）
+- `FluentPage` 不使用 `layer.effect: OpacityMask`（GPU 离屏渲染阻塞页面切换）
 - Python 与 QML 通信优先走信号槽
 
 ## 4. 测试策略
@@ -454,3 +458,71 @@ StackView.onActivating: {
 **原则**：领域模型 = 纯业务概念。UI 路由、数据分组等概念属于 Application/Presentation 层，不应污染领域模型。
 
 **历史记录**：2026-04-13 架构重构中删除了 `SessionStat.text_source_key`，成绩提交简化为只传 `textId`。
+
+### ⚠️ TextAdapter 所有文本加载必须走 Worker（禁止主线程同步加载）
+
+**问题**：本地文本加载曾在主线程同步执行，导致页面切换时 UI 严重阻塞。
+
+**原因**：本地文本来源（如 `builtin_demo`）有 `local_path`，`_load_from_local()` 除了读文件外，还调用 `_lookup_server_text_id()` 回查服务端获取 `text_id`。这个回查涉及同步 HTTP 请求（`fetch_text_by_client_id`），可能耗时数百毫秒。当默认来源是本地来源时，每次进入跟打页面都会在主线程触发这个同步网络请求，导致 UI 冻结。
+
+**错误做法**：根据 `execution_mode` 决定走同步还是异步：
+```python
+# ❌ 错误：本地来源走同步路径，内部可能含同步 HTTP 请求
+if plan.execution_mode == "sync":
+    self._load_sync(plan)  # 主线程阻塞！
+else:
+    self._load_async(plan)
+```
+
+**正确做法**：所有文本加载统一走 Worker：
+```python
+# ✅ 正确：所有加载走后台 Worker，避免主线程阻塞
+def requestLoadText(self, source_key: str) -> None:
+    plan = self._load_text_usecase.plan_load(source_key)
+    self._load_async(plan)  # 无论本地还是网络，都走 Worker
+```
+
+**原则**：任何可能涉及 I/O（文件、网络）的操作都不应在主线程同步执行，即使"理论上"是快速的本地操作，也可能隐含网络调用（如回查服务端 ID）。
+
+**历史记录**：2026-04-16 发现并修复。默认来源 `builtin_demo` 是本地文件，`_lookup_server_text_id` 发起同步 HTTP 请求导致跟打页面切换时 UI 阻塞。
+
+### ⚠️ RinUI ContextMenu 的 height 不能用 enter transition 动画驱动
+
+**问题**：RinUI 的 `ContextMenu`（ComboBox 的 popup）首次打开时会"展开一点又缩回去"。
+
+**原因**：`enter` transition 中的 `NumberAnimation` 将 `height` 从 46 动画到 `contextMenu.implicitHeight`。但首次打开时，ListView 的 model 只在 `popup.visible` 变为 true 后才设置（`model: control.popup.visible ? control.delegateModel : null`），delegate 尚未实例化，`contentHeight` 为 0，导致 `implicitHeight` ≈ 6。动画目标值错误，popup 从 46 缩到 ~6。更致命的是，transition 动画会破坏 `height` 的属性绑定，后续 `contentHeight` 更新无法传递到 `height`，导致 popup 永久卡在错误高度。
+
+**错误做法**：在 `enter` transition 中对 `height` 做动画：
+```qml
+// ❌ 错误：enter transition 动画 height
+enter: Transition {
+    SequentialAnimation {
+        PauseAnimation { duration: 16 }
+        NumberAnimation {
+            target: contextMenu
+            property: "height"
+            from: 46
+            to: contextMenu.implicitHeight  // 首次打开时 ≈ 6，导致缩回
+        }
+    }
+}
+```
+
+**正确做法**：移除 `enter` transition 中的 `height` 动画，改用 `Behavior on height` 驱动展开。`Behavior` 不破坏属性绑定，当 `implicitHeight` 因 `contentHeight` 变化而更新时，`height` 自然跟随，`Behavior` 提供平滑过渡：
+```qml
+// ✅ 正确：Behavior on height 驱动展开
+height: implicitHeight
+Behavior on height {
+    NumberAnimation {
+        duration: Utils.animationSpeedMiddle
+        easing.type: Easing.OutQuint
+    }
+}
+enter: Transition {
+    // 只动画 opacity，不动画 height
+}
+```
+
+**原则**：当属性值依赖异步计算结果（如 `ListView.contentHeight`）时，不要在 `enter` transition 中对该属性做动画——transition 的 `to` 值在启动时就被求值，此时异步数据可能尚未就绪。应使用 `Behavior` 让属性绑定自然驱动动画。
+
+**历史记录**：2026-04-16 发现并修复。

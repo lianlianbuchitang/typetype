@@ -19,9 +19,18 @@ Popup {
     implicitWidth: 100
     implicitHeight: Math.min(listView.contentHeight + 6, maximumHeight)
     y: parent.height
-    height: implicitHeight  // 保持隐式绑定
+    height: implicitHeight
     closePolicy: Popup.CloseOnPressOutside
     focus: true
+
+    // 展开动画：当 height 随 implicitHeight 变化时平滑过渡
+    // 首次打开时 contentHeight 从 0 变为正确值，height 跟随 implicitHeight 自然展开
+    Behavior on height {
+        NumberAnimation {
+            duration: Utils.animationSpeedMiddle
+            easing.type: Easing.OutQuint
+        }
+    }
 
     // 内容 / ListView //
     contentItem: ListView {
@@ -37,6 +46,7 @@ Popup {
         ScrollBar.vertical: ScrollBar {
             id: scrollBar
             policy: ScrollBar.AsNeeded
+            visible: contextMenu.opened
         }
         model: control.popup.visible ? control.delegateModel : null
 
@@ -140,14 +150,6 @@ Popup {
                 duration: 70
                 easing.type: Easing.InOutQuart
             }
-            // NumberAnimation {
-            //     target: shadow
-            //     property: "opacity"
-            //     from: 0
-            //     to: 1
-            //     duration: 600
-            //     easing.type: Easing.InOutCubic
-            // }
             NumberAnimation {
                 target: scrollBar
                 property: "opacity"
@@ -155,17 +157,6 @@ Popup {
                 to: 1
                 duration: 1000
                 easing.type: Easing.InOutCubic
-            }
-            NumberAnimation {
-                target: contextMenu
-                property: "height"
-                from: 46
-                to: contextMenu.implicitHeight
-                duration: Utils.animationSpeedMiddle
-                easing.type: Easing.OutQuint
-                onRunningChanged: {
-                    scrollBar.visible = true;
-                }
             }
         }
     }

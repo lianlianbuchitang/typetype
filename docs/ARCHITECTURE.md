@@ -1,6 +1,6 @@
 # TypeType 架构设计手册
 
-> 最后更新：2026-04-15
+> 最后更新：2026-04-16
 >
 > 本文档描述 **当前客户端实现**。若其他文档与其冲突，以当前源码和本文为准。
 
@@ -42,7 +42,7 @@ TypeType 是一个 **PySide6 + QML 桌面打字练习应用**：
 
 ## 当前实现快照
 
-截至 2026-04-15，当前代码里的稳定事实包括：
+截至 2026-04-16，当前代码里的稳定事实包括：
 
 - 启动入口：`main.py`
 - QML 根页面：`src/qml/Main.qml`
@@ -73,10 +73,10 @@ QML UI
 |----|----------|------|
 | QML | `src/qml/` | 页面、交互、布局、局部 UI 状态 |
 | Presentation | `Bridge` | QML 门面：属性代理、信号转发、Slot 入口 |
-| Presentation | `TypingAdapter` / `TextAdapter` / `AuthAdapter` / `CharStatsAdapter` / `LeaderboardAdapter` / `UploadTextAdapter` | Qt 适配、线程协调、错误回传 |
+| Presentation | `TypingAdapter` / `TextAdapter` / `AuthAdapter` / `CharStatsAdapter` / `LeaderboardAdapter` / `UploadTextAdapter` | Qt 适配、线程协调（所有 I/O 走 Worker）、错误回传 |
 | Application | `LoadTextUseCase` | 文本加载编排入口 |
 | Application | `TextSourceGateway` / `ScoreGateway` / `LeaderboardGateway` / `GlobalExceptionHandler` | 来源路由、DTO/剪贴板、异常消息映射 |
-| Workers | `BaseWorker` / `TextLoadWorker` / `LeaderboardWorker` / `TextListWorker` / `WeakCharsQueryWorker` | 后台任务执行、异常统一处理 |
+| Workers | `BaseWorker` / `TextLoadWorker` / `LeaderboardWorker` / `TextListWorker` / `CatalogWorker` / `WeakCharsQueryWorker` | 后台任务执行、异常统一处理 |
 | Domain | `TypingService` / `CharStatsService` / `AuthService` | 纯业务逻辑、状态管理、统计计算 |
 | Ports | `TextProvider` / `LocalTextLoader` / `Clipboard*` / `AuthProvider` / `CharStatsRepository` / `TextUploader` / `ScoreSubmitter` / `LeaderboardProvider` / `AsyncExecutor` | 抽象协议 |
 | Integration | `RemoteTextProvider` / `QtLocalTextLoader` / `ApiClientAuthProvider` / `SqliteCharStatsRepository` / `LeaderboardFetcher` 等 | Port 实现 |
@@ -220,8 +220,8 @@ ToolLine.qml
   -> TextAdapter.requestLoadText(sourceKey)
   -> LoadTextUseCase.plan_load(sourceKey)
   -> TextSourceGateway.plan_load(sourceKey)
-  -> TextLoadPlan.execution_mode
-  -> sync / async
+  -> TextLoadPlan（无论本地还是网络，统一走 Worker）
+  -> TextLoadWorker（后台线程）
   -> LoadTextUseCase.load(plan)
   -> TextSourceGateway.load_from_plan(sourceEntry)
   -> QtLocalTextLoader 或 RemoteTextProvider
@@ -237,7 +237,7 @@ ToolLine.qml
 
 | 组件 | 做什么 | 不做什么 |
 |------|--------|----------|
-| `TextAdapter` | Qt 信号、线程协调、本地同步/远程异步执行 | 不做来源路由决策 |
+| `TextAdapter` | Qt 信号、线程协调、**所有加载统一走 Worker**（包括本地来源） | 不做来源路由决策，不在主线程做同步 I/O |
 | `LoadTextUseCase` | 输出执行计划、统一文本加载入口 | 不直接碰 Qt |
 | `TextSourceGateway` | 查配置、决定本地还是远程、调用 Port | 不管 UI 状态 |
 | `QtLocalTextLoader` | 读本地文件 | 不含业务路由 |
@@ -438,10 +438,28 @@ Domain 可以依赖 **抽象协议（Port）**，不能依赖 **具体 Qt / HTTP
 
 ---
 
+## RinUI 本地修改记录
+
+RinUI 是 vendored 第三方框架（`RinUI/`），原则上不修改，但以下修改是必要的性能和正确性修复。
+详细变更记录见 `RinUI/LOCAL_MODIFICATIONS.md`（如有）。
+
+| # | 文件 | 修改 | 原因 |
+|---|------|------|------|
+| 1 | `RinUI/components/ContextMenu.qml` | 下拉弹出位置从垂直居中改为 `y: parent.height`，移除 `Behavior on y` | ComboBox 下拉菜单先原地展开再滑动到居中位置，不符合标准下拉行为。居中 y 随 height 动画重算 + y 的平滑动画导致滑动效果 |
+| 2 | `RinUI/components/Navigation/NavigationBar.qml` | Back 按钮 `anchors.leftMargin` 补偿 `windowDragArea` 偏移 | FluentWindow 标题栏 Back 按钮与 NavigationBar 导航项水平不对齐（偏左约 5px），因 title Row 在 TitleBar 坐标系而 NavigationBar 主体有 `windowDragArea` 偏移 |
+| 3 | `RinUI/components/Navigation/NavigationView.qml` | 添加 `property bool loggedin: false`，页面创建时传递给各页面 | Main.qml 的登录状态需要传递给所有页面实现统一登录状态管理，NavigationView 作为中间层传递属性 |
+| 4 | `RinUI/windows/FluentPage.qml` | 移除 `layer.effect: OpacityMask` 及 `Qt5Compat.GraphicalEffects` 依赖 | `OpacityMask` 强制 GPU 同步离屏渲染，每次页面切换都阻塞主线程。FluentPage 的 `Flickable.clip: true` + `appLayer` 背景已提供足够的视觉效果，圆角裁切不必要 |
+| 5 | `RinUI/components/ContextMenu.qml` | `enter` transition 中高度动画前加 `PauseAnimation { duration: 16 }` | 首次打开 popup 时 ListView 未完成布局，`implicitHeight` 读到 0 导致动画到 6px 后缩回。一帧延迟给 ListView 时间完成布局 |
+
+新增修改时请在此表追加记录。
+
+---
+
 ## 版本历史
 
 | 日期 | 变更 |
 |------|------|
+| 2026-04-16 | TextAdapter 移除 `_load_sync`，所有文本加载统一走 Worker（本地来源内含同步 HTTP 回查 `_lookup_server_text_id`，不能在主线程执行）；FluentPage 移除 `layer.effect: OpacityMask`（GPU 离屏渲染阻塞页面切换）；RinUI ContextMenu 的 `height` 动画从 `enter` transition 改为 `Behavior on height`（修复首次打开缩回问题） |
 | 2026-04-15 | 补全文档遗漏：新增 LeaderboardProvider/AsyncExecutor 端口、LeaderboardGateway/Adapter/Worker、TextListWorker、WeakCharsQueryWorker、UploadTextAdapter、text_id 工具等 |
 | 2026-04-13 | 架构重构：只有服务端文本才能提交成绩；客户端移除 hash 计算；删除无感上传回调链路；source_key 不再进入成绩提交链路 |
 | 2026-04-11 | 新增 TextUploader Port、text_id 生成逻辑、无感上传链路；移除配置中 text_id 字段 |

@@ -1,7 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 2.15
-import Qt5Compat.GraphicalEffects  // 图形库
 import "../themes"
 import "../components"
 import "../windows"
@@ -72,22 +71,6 @@ Page {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(fluentPage.width - fluentPage.horizontalPadding * 2, fluentPage.wrapperWidth)  // 24 + 24 的边距
             spacing: 14
-        }
-    }
-
-    layer.enabled: true
-    layer.effect: OpacityMask{
-        maskSource: Rectangle{
-            width: fluentPage.width
-            height: fluentPage.height
-            radius: fluentPage.radius
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                width: parent.width - Theme.currentTheme.appearance.windowRadius
-                height: Theme.currentTheme.appearance.windowRadius
-            }
         }
     }
 
