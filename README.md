@@ -148,6 +148,7 @@ uv run python -m nuitka main.py \
   --include-qt-plugins=qml \
   --include-package=RinUI \
   --include-data-dir=RinUI=RinUI \
+  --include-data-dir=config=config \
   --output-dir=deployment \
   --quiet \
   --noinclude-qt-translations \
