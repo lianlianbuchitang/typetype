@@ -216,6 +216,6 @@ sudo usermod -aG input $USER
 
 ## 许可证
 
-MIT © 2026 [Kurisu](https://github.com/whynusn)
+MIT © 2026 [whynusn](https://github.com/whynusn)
 
 </div>
