@@ -4,7 +4,9 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QThreadPool, Signal, Slot
 
+from ...config.runtime_config import RuntimeConfig
 from ...application.gateways.leaderboard_gateway import LeaderboardGateway
+from ...models.dto.text_catalog_item import TextCatalogItem
 from ...workers.leaderboard_worker import LeaderboardWorker
 from ...workers.text_list_worker import TextListWorker
 
@@ -30,9 +32,12 @@ class LeaderboardAdapter(QObject):
     textListLoadFailed = Signal(str)
     textListLoadingChanged = Signal()
 
-    def __init__(self, leaderboard_gateway: LeaderboardGateway):
+    def __init__(
+        self, leaderboard_gateway: LeaderboardGateway, runtime_config: RuntimeConfig
+    ):
         super().__init__()
         self._leaderboard_gateway = leaderboard_gateway
+        self._runtime_config = runtime_config
         self._thread_pool = QThreadPool.globalInstance()
         self._loading = False
         self._text_list_loading = False
@@ -115,6 +120,19 @@ class LeaderboardAdapter(QObject):
 
     def _on_catalog_loaded(self, catalog: list[dict]) -> None:
         """处理目录加载成功。"""
+        # 转换为 TextCatalogItem 列表更新到 RuntimeConfig 供异步回查兜底使用
+        catalog_items = [
+            TextCatalogItem(
+                id=int(item.get("id", 0)),
+                text_id=item.get("sourceKey", ""),
+                label=item.get("label", ""),
+                description=item.get("category", ""),
+                has_ranking=False,
+            )
+            for item in catalog
+        ]
+        self._runtime_config.update_catalog(catalog_items)
+
         # 转换服务端 TextSource 字段名 (sourceKey → key) 匹配 QML ComboBox
         options = [
             {"key": item.get("sourceKey", ""), "label": item.get("label", "")}

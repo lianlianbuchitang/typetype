@@ -16,12 +16,13 @@
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import QObject, QThreadPool, QTimer, Signal
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtQuick import QQuickTextDocument
 
 from ...application.gateways.score_gateway import ScoreGateway
 from ...domain.services.typing_service import TypingService
+from ...workers.score_submit_worker import ScoreSubmitWorker
 
 if TYPE_CHECKING:
     from ...ports.score_submitter import ScoreSubmitter
@@ -66,6 +67,9 @@ class TypingAdapter(QObject):
         self._second_timer.timeout.connect(self._accumulate_time)
         self._second_timer.setInterval(int(self.timeInterval * 1000))
 
+        # 后台线程池
+        self._thread_pool = QThreadPool.globalInstance()
+
     def _match_color_format(self) -> None:
         self._no_fmt.setBackground(QColor("transparent"))
         self._correct_fmt.setBackground(QColor("gray"))
@@ -105,8 +109,8 @@ class TypingAdapter(QObject):
                 self.readOnlyChanged.emit()
             self._typing_service.flush_char_stats()
 
-            # 提交成绩到服务器
-            self._submit_score()
+            # 异步提交成绩到服务器（后台线程，不阻塞 UI）
+            self._submit_score_async()
 
             self.typingEnded.emit()
             record = self._typing_service.get_history_record()
@@ -114,17 +118,26 @@ class TypingAdapter(QObject):
             return True
         return False
 
-    def _submit_score(self) -> None:
-        """提交成绩到服务器（仅服务端文本可提交）。"""
+    def _submit_score_async(self) -> None:
+        """异步提交成绩到服务器（后台线程，不阻塞 UI）。"""
         if self._score_submitter is None:
             return
         text_id = self._typing_service.text_id
         if text_id is None or text_id <= 0:
             return  # 纯练习模式或未载文，不提交
-        self._score_submitter.submit(
-            self._typing_service.score_data,
+        worker = ScoreSubmitWorker(
+            score_submitter=self._score_submitter,
+            score_data=self._typing_service.score_data,
             text_id=text_id,
         )
+        worker.signals.failed.connect(self._on_score_submit_failed)
+        self._thread_pool.start(worker)
+
+    def _on_score_submit_failed(self, error_msg: str) -> None:
+        """成绩提交失败回调。"""
+        from ...utils.logger import log_warning
+
+        log_warning(f"[TypingAdapter] {error_msg}")
 
     def prepare_for_text_load(self) -> None:
         """为新一轮载文做准备：停止当前输入并锁定输入区。"""

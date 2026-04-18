@@ -79,6 +79,7 @@ class TextAdapter(QObject):
         所有加载均走后台 Worker，包括本地文件加载。
         原因：本地文件加载内部会调用 _lookup_server_text_id 回查服务端，
         这涉及同步 HTTP 请求，如果在主线程执行会阻塞 UI。
+        由于回查也在 Worker 内完成，text_id 随加载结果一起返回，无需额外异步回查。
         """
         if self._text_loading:
             return

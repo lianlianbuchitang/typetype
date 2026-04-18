@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from src.backend.application.gateways.text_source_gateway import TextSourceGateway
 from src.backend.config.text_source_config import TextSourceEntry
+from src.backend.models.dto.fetched_text import FetchedText
 from src.backend.ports.local_text_loader import LocalTextLoader
 from src.backend.ports.text_provider import TextProvider
 from src.backend.config.runtime_config import RuntimeConfig
@@ -67,24 +68,18 @@ def test_load_from_plan_local_source_no_server_match():
     assert fetched.content == "local text"
     assert fetched.text_id is None
     assert error == ""
-    runtime_config.get_text_source.assert_not_called()
     local_text_loader.load_text.assert_called_once_with("/tmp/text.txt")
-    text_provider.fetch_text_by_key.assert_not_called()
 
 
 def test_load_from_plan_local_source_with_server_match():
-    """本地文本在服务端有匹配时返回服务端 text_id。"""
-    from src.backend.models.dto.fetched_text import FetchedText
-
+    """本地文本在服务端有匹配时 text_id 通过回查获得。"""
     gateway, runtime_config, text_provider, local_text_loader = _build_gateway(
         TextSourceEntry(
             key="builtin_demo", label="本地示例", local_path="/tmp/text.txt"
         )
     )
     local_text_loader.load_text.return_value = "你好，世界。"
-    text_provider.fetch_text_by_client_id.return_value = FetchedText(
-        content="你好，世界。", text_id=752
-    )
+    text_provider.fetch_text_by_client_id.return_value = None
     source = TextSourceEntry(
         key="builtin_demo", label="本地示例", local_path="/tmp/text.txt"
     )
@@ -94,12 +89,20 @@ def test_load_from_plan_local_source_with_server_match():
     assert success is True
     assert fetched is not None
     assert fetched.content == "你好，世界。"
-    assert fetched.text_id == 752
+    assert fetched.text_id is None  # 无匹配，text_id 为 None
+
+    # 设置 mock 使回查成功
+    text_provider.fetch_text_by_client_id.return_value = FetchedText(
+        content="你好，世界。", text_id=752
+    )
+
+    success, fetched, error = gateway.load_from_plan(source)
+
+    assert success is True
+    assert fetched.text_id == 752  # 有匹配时 text_id 由回查获得
 
 
 def test_load_from_plan_uses_text_provider_for_remote_source():
-    from src.backend.models.dto.fetched_text import FetchedText
-
     gateway, runtime_config, text_provider, local_text_loader = _build_gateway(
         TextSourceEntry(key="remote", label="Remote")
     )

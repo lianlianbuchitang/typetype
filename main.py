@@ -183,7 +183,10 @@ def main():
         token_provider=_get_jwt_token,
     )
     leaderboard_gateway = LeaderboardGateway(leaderboard_provider=leaderboard_provider)
-    leaderboard_adapter = LeaderboardAdapter(leaderboard_gateway=leaderboard_gateway)
+    leaderboard_adapter = LeaderboardAdapter(
+        leaderboard_gateway=leaderboard_gateway,
+        runtime_config=runtime_config,
+    )
 
     # Upload text adapter
     upload_text_adapter = UploadTextAdapter(

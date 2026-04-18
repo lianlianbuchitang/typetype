@@ -16,6 +16,7 @@ from ...config.runtime_config import RuntimeConfig
 from ...models.dto.fetched_text import FetchedText
 from ...ports.local_text_loader import LocalTextLoader
 from ...ports.text_provider import TextProvider
+from ...utils.logger import log_info
 from ...utils.text_id import text_id_from_content
 
 if TYPE_CHECKING:
@@ -64,14 +65,17 @@ class TextSourceGateway:
     def _load_from_local(
         self, path: str | None, label: str = "", source_key: str = ""
     ) -> tuple[bool, FetchedText | None, str]:
-        """从本地文件加载文本，并尝试回查服务端获取 text_id。"""
+        """从本地文件加载文本，并尝试回查服务端获取 text_id。
+
+        此方法在 Worker 后台线程中调用，同步 HTTP 请求不会阻塞 UI。
+        """
         if not path:
             return False, None, "本地来源缺少路径"
         text = self._local_text_loader.load_text(path)
         if text is None:
             return False, None, "无法读取本地文件"
 
-        # 尝试回查服务端获取 text_id
+        # 回查服务端获取 text_id
         text_id = self._lookup_server_text_id(source_key, text)
         return True, FetchedText(content=text, text_id=text_id), ""
 
@@ -80,6 +84,7 @@ class TextSourceGateway:
 
         本地内容与服务端一致时返回服务端 ID，不一致（用户修改过）时返回 None。
         服务端对不存在的 sourceKey 会回退到 "custom"，因此需尝试两次。
+        hash 不匹配说明内容有差异，返回 None 走纯练习模式（不提交成绩）。
         """
         if not source_key:
             return None
@@ -89,6 +94,9 @@ class TextSourceGateway:
                 client_text_id = text_id_from_content(key, content)
                 fetched = self._text_provider.fetch_text_by_client_id(client_text_id)
                 if fetched and fetched.text_id is not None:
+                    log_info(
+                        f"[TextSourceGateway] hash lookup matched: key='{key}' text_id={fetched.text_id}"
+                    )
                     return fetched.text_id
             except Exception:
                 pass

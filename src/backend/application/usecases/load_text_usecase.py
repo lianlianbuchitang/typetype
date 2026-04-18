@@ -18,6 +18,7 @@ class LoadTextResult:
     text: str
     text_id: int | None = None
     source_label: str = ""
+    source_key: str = ""
     error_message: str = ""
 
 
@@ -69,6 +70,7 @@ class LoadTextUseCase:
             text=fetched.content,
             text_id=fetched.text_id,
             source_label=result_title,
+            source_key=plan.source_entry.key,
         )
 
     def load_from_clipboard(self) -> LoadTextResult:
@@ -84,4 +86,5 @@ class LoadTextUseCase:
             text=text,
             text_id=None,
             source_label="剪贴板",
+            source_key="",
         )

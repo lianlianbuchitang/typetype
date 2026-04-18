@@ -21,6 +21,7 @@ def test_get_catalog_builds_text_catalog_items_from_response():
         {
             "data": [
                 {
+                    "id": 1,
                     "sourceKey": "cloud_001",
                     "label": "云端文章",
                     "category": "每日推荐",
@@ -37,6 +38,7 @@ def test_get_catalog_builds_text_catalog_items_from_response():
 
     assert result == [
         TextCatalogItem(
+            id=1,
             text_id="cloud_001",
             label="云端文章",
             description="每日推荐",

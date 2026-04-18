@@ -56,6 +56,7 @@ def test_runtime_config_source_options_include_catalog_items():
     runtime_config.update_catalog(
         [
             TextCatalogItem(
+                id=1,
                 text_id="cloud_001",
                 label="云端文章",
                 description="每日推荐",

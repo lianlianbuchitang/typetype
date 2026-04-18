@@ -26,32 +26,29 @@ FluentPage {
         errorText.text = "";
     }
 
-    function syncSourceOptionsForTarget() {
+    function syncSourceOptionsFromCatalog(catalog) {
         sourceListModel.clear();
-        var options = null;
-        if (uploadPage.toCloud) {
-            options = appBridge && appBridge.uploadTextSourceOptions ? appBridge.uploadTextSourceOptions : null;
-        } else {
-            options = appBridge && appBridge.textSourceOptions ? appBridge.textSourceOptions : null;
-        }
-        if (options) {
-            for (var i = 0; i < options.length; i++) {
-                sourceListModel.append(options[i]);
+        if (catalog) {
+            for (var i = 0; i < catalog.length; i++) {
+                sourceListModel.append(catalog[i]);
             }
         }
-        sourceListModel.append({"key": "__custom__", "label": qsTr("自定义")});
         if (sourceComboBox.currentIndex >= sourceListModel.count) {
             sourceComboBox.currentIndex = 0;
         }
     }
 
     Component.onCompleted: {
-        syncSourceOptionsForTarget();
+        if (appBridge) {
+            appBridge.loadCatalog();
+        }
     }
 
-    // 每次页面激活重新同步，确保目录刷新后能看到最新选项
+    // 每次页面激活重新加载目录
     StackView.onActivated: {
-        syncSourceOptionsForTarget();
+        if (appBridge) {
+            appBridge.loadCatalog();
+        }
     }
 
     ColumnLayout {
@@ -118,7 +115,6 @@ FluentPage {
                 checked: true
                 onCheckedChanged: {
                     uploadPage.toLocal = checked;
-                    syncSourceOptionsForTarget();
                 }
             }
 
@@ -128,7 +124,6 @@ FluentPage {
                 enabled: appBridge ? appBridge.loggedin : false
                 onCheckedChanged: {
                     uploadPage.toCloud = checked;
-                    syncSourceOptionsForTarget();
                 }
             }
         }
@@ -217,6 +212,9 @@ FluentPage {
                 uploadPage.toCloud = false;
                 cloudCheckBox.checked = false;
             }
+        }
+        function onCatalogLoaded(catalog) {
+            syncSourceOptionsFromCatalog(catalog);
         }
     }
 }

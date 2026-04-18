@@ -41,6 +41,7 @@ class RemoteTextProvider:
                     items = [item for item in data if isinstance(item, dict)]
             return [
                 TextCatalogItem(
+                    id=int(item.get("id", 0)),
                     text_id=item.get("sourceKey", ""),
                     label=item.get("label", ""),
                     description=item.get("category", ""),
