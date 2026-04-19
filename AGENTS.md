@@ -200,7 +200,7 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，少量必要
 |------|------|------|
 | **Domain Services** | TypingService | 打字统计纯逻辑（SessionStat 状态、键数累积） |
 | | AuthService | 登录认证（login/logout、token 验证与刷新） |
-| | CharStatsService | 字符维度统计（缓存、持久化、薄弱字查询） |
+| | CharStatsService | 字符维度统计（缓存、持久化、薄弱字查询、自定义排序） |
 | **Application** | LoadTextUseCase | 文本加载编排 + 业务验证（异常上浮到 BaseWorker） |
 | | GlobalExceptionHandler | 网络异常 → 用户友好消息集中映射 |
 | **Gateways** | TextSourceGateway | Port 适配 + 配置查询 |
@@ -215,6 +215,26 @@ RinUI/                   # 第三方 QML 框架（本地 vendored，少量必要
 | | TextAdapter | Qt 适配（所有加载走 Worker、信号发射、UI 配置展示） |
 | | LeaderboardAdapter | 排行榜 Qt 适配（异步 Worker、信号管理） |
 | | UploadTextAdapter | 文本上传 Qt 适配（本地写入 + 云端上传） |
+
+### 薄弱字排序功能
+
+薄弱字（Weak Chars）支持自定义排序模式，全链路传递排序参数：
+
+**数据流**：WeakCharsPage.qml → Bridge → CharStatsAdapter → WeakCharsQueryWorker → CharStatsService → CharStatsRepository
+
+**排序模式**（`CharStatsRepository.get_chars_by_sort`）：
+
+| sort_mode | 说明 |
+|-----------|------|
+| `error_rate` | 按错误率排序（默认） |
+| `error_count` | 按错误次数排序 |
+| `weighted` | 加权排序，权重由 `weights` 参数指定 |
+
+weighted 模式的 `weights` 参数格式：`{"error_rate": float, "total_count": float, "error_count": float}`。
+
+**CharStatsService.get_weakest_chars(n, sort_mode, weights)** 直接透传参数到 Repository，无额外业务逻辑。
+
+**QML 交互**：WeakCharsPage 提供 ComboBox 选择排序模式，weighted 模式下额外显示各维度的权重 ComboBox。`typingEnded` 信号触发薄弱字列表自动刷新。
 
 ### 架构约束（防止职责混乱）
 
