@@ -63,7 +63,7 @@ Pane {
 
         ComboBox {
             id: sourceSelector
-            width: 130
+            width: 110
             height: 36
             anchors.verticalCenter: parent.verticalCenter
             model: sourceListModel
@@ -73,7 +73,7 @@ Pane {
 
         Button {
             id: loadText
-            width: 130
+            width: 110
             height: 36
             anchors.verticalCenter: parent.verticalCenter
             text: "载文"
@@ -84,7 +84,7 @@ Pane {
 
         Button {
             id: clipboardLoadText
-            width: 130
+            width: 110
             height: 36
             anchors.verticalCenter: parent.verticalCenter
             text: "剪贴板载文"
@@ -95,7 +95,7 @@ Pane {
 
         Button {
             id: retype
-            width: 130
+            width: 110
             height: 36
             anchors.verticalCenter: parent.verticalCenter
             text: "重打[F3]"
@@ -106,7 +106,7 @@ Pane {
 
         Button {
             id: shuffle
-            width: 130
+            width: 110
             height: 36
             anchors.verticalCenter: parent.verticalCenter
             text: "乱序[F4]"
