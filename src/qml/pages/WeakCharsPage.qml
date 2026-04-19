@@ -11,7 +11,7 @@ Item {
 
     function reloadWeakChars() {
         if (appBridge) {
-            var w = sortBy === "weighted" ? sortWeights : null;
+            var w = sortBy === "weighted" ? sortWeights : {};
             appBridge.loadWeakChars(10, sortBy, w);
         }
     }
@@ -75,7 +75,7 @@ Item {
                 // 错误率 weight
                 RowLayout {
                     spacing: 4
-                    Text { text: "错误率"; color: Theme.currentTheme.colors.textPrimary; font.pixelSize: 12 }
+                    Text { text: "错误率"; color: Theme.currentTheme.colors.textColor; font.pixelSize: 12 }
                     ComboBox {
                         id: errorRateWeight
                         Layout.preferredWidth: 56
@@ -87,7 +87,7 @@ Item {
                 // 出现频率 weight
                 RowLayout {
                     spacing: 4
-                    Text { text: "出现频率"; color: Theme.currentTheme.colors.textPrimary; font.pixelSize: 12 }
+                    Text { text: "出现频率"; color: Theme.currentTheme.colors.textColor; font.pixelSize: 12 }
                     ComboBox {
                         id: totalCountWeight
                         Layout.preferredWidth: 56
@@ -99,7 +99,7 @@ Item {
                 // 错误次数 weight
                 RowLayout {
                     spacing: 4
-                    Text { text: "错误次数"; color: Theme.currentTheme.colors.textPrimary; font.pixelSize: 12 }
+                    Text { text: "错误次数"; color: Theme.currentTheme.colors.textColor; font.pixelSize: 12 }
                     ComboBox {
                         id: errorCountWeight
                         Layout.preferredWidth: 56
