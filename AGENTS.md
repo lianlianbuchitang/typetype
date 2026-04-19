@@ -557,3 +557,24 @@ enter: Transition {
 **原则**：当属性值依赖异步计算结果（如 `ListView.contentHeight`）时，不要在 `enter` transition 中对该属性做动画——transition 的 `to` 值在启动时就被求值，此时异步数据可能尚未就绪。应使用 `Behavior` 让属性绑定自然驱动动画。
 
 **历史记录**：2026-04-16 发现并修复。
+
+### ⚠️ RinUI ComboBox 的 `onActivated` 信号不触发
+
+**问题**：在 RinUI 框架下，ComboBox 使用 `textRole`/`valueRole` 绑定 ListModel 时，`onActivated` 信号处理函数不被执行。用户点击下拉选项后，回调不触发。
+
+**原因**：RinUI 没有自己的 ComboBox 组件，使用 Qt Quick Controls 2 的原生 ComboBox。但 RinUI 的某些内部机制可能干扰了 `onActivated` 信号的转发。SettingsPage 已使用 `onCurrentIndexChanged` 而非 `onActivated`。
+
+**正确做法**：改用 `onCurrentIndexChanged`。排序等需要去重的场景加守卫：
+```qml
+onCurrentIndexChanged: {
+    if (currentIndex >= 0 && currentIndex < model.count) {
+        var val = model.get(currentIndex).value;
+        if (val !== currentVal) {
+            currentVal = val;
+            doSomething();
+        }
+    }
+}
+```
+
+**历史记录**：2026-04-19，薄弱字排序功能和文本排行页面修复。
