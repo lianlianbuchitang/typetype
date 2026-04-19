@@ -7,7 +7,7 @@ FluentPage {
     title: qsTr("设置")
 
     ColumnLayout {
-        anchors.fill: parent
+        Layout.fillWidth: true
         spacing: 4
 
         Text {
