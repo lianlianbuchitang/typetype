@@ -225,7 +225,7 @@ Windows 建议追加：
 
 ## 致谢
 
-- [RinUI](https://github.com/RinLit/RinUI) — Fluent Design 风格 QML 组件库（MIT License © 2025 RinLit）
+- [RinUI](https://github.com/RinLit-233-shiroko/Rin-UI) — Fluent Design 风格 QML 组件库（MIT License © 2025 RinLit）
 
 ---
 
