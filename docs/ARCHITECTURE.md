@@ -105,7 +105,7 @@ QML UI
 | Presentation | `TypingAdapter` / `TextAdapter` / `AuthAdapter` / `CharStatsAdapter` / `LeaderboardAdapter` / `UploadTextAdapter` | Qt 适配、线程协调（所有 I/O 走 Worker）、错误回传 |
 | Application | `LoadTextUseCase` | 文本加载编排入口 |
 | Application | `TextSourceGateway` / `ScoreGateway` / `LeaderboardGateway` / `GlobalExceptionHandler` | 来源路由、DTO/剪贴板、异常消息映射 |
-| Workers | `BaseWorker` / `TextLoadWorker` / `LeaderboardWorker` / `TextListWorker` / `CatalogWorker` / `WeakCharsQueryWorker` | 后台任务执行、异常统一处理 |
+| Workers | `BaseWorker` / `TextLoadWorker` / `LeaderboardWorker` / `TextListWorker` / `CatalogWorker` / `WeakCharsQueryWorker` / `ScoreSubmitWorker` | 后台任务执行、异常统一处理 |
 | Domain | `TypingService` / `CharStatsService` / `AuthService` | 纯业务逻辑、状态管理、统计计算 |
 | Ports | `TextProvider` / `LocalTextLoader` / `Clipboard*` / `AuthProvider` / `CharStatsRepository` / `TextUploader` / `ScoreSubmitter` / `LeaderboardProvider` / `AsyncExecutor` | 抽象协议 |
 | Integration | `RemoteTextProvider` / `QtLocalTextLoader` / `ApiClientAuthProvider` / `SqliteCharStatsRepository` / `LeaderboardFetcher` 等 | Port 实现 |
@@ -188,6 +188,7 @@ src/backend/
     ├── catalog_worker.py
     ├── text_load_worker.py
     ├── leaderboard_worker.py
+    ├── score_submit_worker.py
     ├── text_list_worker.py
     └── weak_chars_query_worker.py
 ```
@@ -232,7 +233,7 @@ RuntimeConfig
   -> ScoreGateway / TextSourceGateway / LoadTextUseCase
   -> CharStatsService / TypingService / AuthService
   -> ApiClientScoreSubmitter / TextUploader
-  -> TypingAdapter / TextAdapter / AuthAdapter / CharStatsAdapter
+  -> TypingAdapter / TextAdapter / AuthAdapter / CharStatsAdapter / LeaderboardAdapter / UploadTextAdapter
   -> Bridge
   -> appBridge 注入 QML
 ```
