@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtQuick import QQuickTextDocument
@@ -65,6 +65,7 @@ class Bridge(QObject):
     uploadResult = Signal(bool, str, int)  # (success, message, server_text_id)
     tokenExpired = Signal()
     textIdChanged = Signal()
+    baseUrlChanged = Signal()
 
     def __init__(
         self,
@@ -75,6 +76,7 @@ class Bridge(QObject):
         upload_text_adapter: UploadTextAdapter | None = None,
         leaderboard_adapter: LeaderboardAdapter | None = None,
         key_listener: GlobalKeyListener | None = None,
+        base_url_update_callback: Callable[[str], None] | None = None,
     ):
         super().__init__()
         self._typing_adapter = typing_adapter
@@ -84,6 +86,7 @@ class Bridge(QObject):
         self._upload_text_adapter = upload_text_adapter
         self._leaderboard_adapter = leaderboard_adapter
         self._key_listener = key_listener
+        self._base_url_update_callback = base_url_update_callback
         self._is_special_platform = key_listener is not None
         self._lower_pane_focused = False
         self._text_id = 0
@@ -270,6 +273,11 @@ class Bridge(QObject):
     def textId(self) -> int:
         return self._text_id
 
+    @Property(str, notify=baseUrlChanged)
+    def baseUrl(self) -> str:
+        """当前 API 服务地址。"""
+        return self._text_adapter.get_base_url()
+
     # Slot 入口
 
     @Slot(str)
@@ -449,3 +457,10 @@ class Bridge(QObject):
         clipboard = QGuiApplication.clipboard()
         if clipboard:
             clipboard.setText(text)
+
+    @Slot(str)
+    def setBaseUrl(self, new_base_url: str) -> None:
+        """更新 API 服务地址，持久化到配置文件，并同步更新所有依赖对象。"""
+        if self._base_url_update_callback:
+            self._base_url_update_callback(new_base_url)
+        self.baseUrlChanged.emit()
